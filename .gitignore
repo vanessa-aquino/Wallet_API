@@ -1,0 +1,38 @@
+﻿# Pastas do Visual Studio
+.vs/
+.vscode/
+
+# Build results
+bin/
+obj/
+out/
+
+# Configuração do usuário
+*.user
+*.userosscache
+*.suo
+*.sln.docstates
+
+# Cache de pacotes
+packages/
+*.nupkg
+*.snupkg
+
+# Logs e resultados de testes
+TestResults/
+*.log
+*.trx
+*.coverage
+
+# Secretos do usuário
+secrets.json
+appsettings.Development.json
+
+# Configurações de contêiner
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Configurações locais
+*.db
+*.sqlite
