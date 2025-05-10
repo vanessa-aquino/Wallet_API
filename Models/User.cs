@@ -14,6 +14,19 @@ namespace WalletAPI.Models
         public DateTime CreatedAt { get; set; }
         public bool Active { get; set; }
 
+        public User(int id, string firstName, string lastName, DateTime birthDate, string email, int phone, string passwordHash, DateTime createdAt)
+        {
+            Id = id;
+            FirstName = firstName;
+            LastName = lastName;
+            BirthDate = birthDate;
+            Email = email;
+            Phone = phone;
+            PasswordHash = passwordHash;
+            CreatedAt = createdAt;
+            Active = true;
+        }
+
         public void SetPassword(string password)
         {
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(password);
@@ -29,16 +42,28 @@ namespace WalletAPI.Models
             return Active;
         }
 
-        public bool Activate()
+        public void Activate()
         {
-            return Active = true;
+            Active = true;
         }
 
-        public bool Deactivate()
+        public void Deactivate()
         {
-            return Active = false;
+            Active = false;
         }
 
+        public void UpdateProfile(string firstName, string lastName,  string email, int phone)
+        {
+            FirstName = firstName;
+            LastName = lastName;
+            Email = email;
+            Phone = phone;
+        }
+
+        public TimeSpan GetAccountAge()
+        {
+            return DateTime.Now.Subtract(CreatedAt);
+        }
 
     }
 
