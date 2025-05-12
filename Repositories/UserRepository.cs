@@ -44,7 +44,7 @@ namespace WalletAPI.Repositories
             }
             catch (KeyNotFoundException knfEx)
             {
-                throw new("User not found", knfEx);
+                throw new KeyNotFoundException ("User not found", knfEx);
             }
             catch (Exception ex)
             {
