@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using WalletAPI.Models;
 
 namespace WalletAPI.Data
 {
@@ -9,5 +10,27 @@ namespace WalletAPI.Data
         public DbSet<User> Users { get; set; }
         public DbSet<Wallet> Wallets { get; set; }
         public DbSet<Transaction> Transactions { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            // User -> Wallet (1:1)
+            modelBuilder.Entity<User>()
+                .HasOne(u => u.Wallet)
+                .WithOne(w => w.User)
+                .HasForeignKey<Wallet>(w => w.UserId);
+        
+            // Wallet -> Transactions (1:N)
+            modelBuilder.Entity<Wallet>()
+                .HasMany(w => w.Transactions)
+                .WithOne(t => t.Wallet)
+                .HasForeignKey(t => t.WalletId);
+        
+            // User -> Transactions (1:N)
+            modelBuilder.Entity<User>()
+                .HasMany(u => u.Transactions)
+                .WithOne(t => t.User)
+                .HasForeignKey(t => t.UserId);
+        
+        }
     }
 }

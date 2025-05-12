@@ -13,8 +13,12 @@ namespace WalletAPI.Models
         public string PasswordHash { get; set; }
         public DateTime CreatedAt { get; set; }
         public bool Active { get; set; }
+        public int WalletID {  get; set; }
+        public Wallet Wallet { get; set; }
 
-        public User(int id, string firstName, string lastName, DateTime birthDate, string email, int phone, string passwordHash, DateTime createdAt)
+        public User() { }
+
+        public User(int id, string firstName, string lastName, DateTime birthDate, string email, int phone, string passwordHash)
         {
             Id = id;
             FirstName = firstName;
@@ -23,7 +27,7 @@ namespace WalletAPI.Models
             Email = email;
             Phone = phone;
             PasswordHash = passwordHash;
-            CreatedAt = createdAt;
+            CreatedAt = DateTime.Now;
             Active = true;
         }
 
