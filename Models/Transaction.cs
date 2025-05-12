@@ -15,13 +15,13 @@ namespace WalletAPI.Models
         public User User { get; set; }
         public Wallet Wallet { get; set; }
 
+        public Transaction() { }
+
         public Transaction(double amount,  TransactionType transactionType, TransactionStatus transactionStatus, string? description)
         {
             Amount = amount;
             TransactionType = transactionType;
             Date = DateTime.Now;
-            UserId = User.Id;
-            WalletId = Wallet.Id;
             Status = transactionStatus;
             Description = description;
         }

@@ -1,4 +1,5 @@
 ﻿using BCrypt.Net;
+using System.ComponentModel.DataAnnotations;
 
 namespace WalletAPI.Models
 {
@@ -15,6 +16,10 @@ namespace WalletAPI.Models
         public bool Active { get; set; }
         public int WalletID {  get; set; }
         public Wallet Wallet { get; set; }
+        public List<Transaction> Transactions { get; set; }
+        
+        [Timestamp]
+        public byte[] RowVersion { get; set; } 
 
         public User() { }
 
