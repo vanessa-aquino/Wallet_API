@@ -1,11 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using System.Security.Cryptography.X509Certificates;
 using WalletAPI.Data;
+using WalletAPI.Interfaces;
 using WalletAPI.Models;
 
 namespace WalletAPI.Repositories
 {
-    public class WalletRepository
+    public class WalletRepository : IWalletRepository
     {
         private readonly AppDbContext _context;
 
@@ -53,6 +53,31 @@ namespace WalletAPI.Repositories
             }
         }
 
+        public async Task<Wallet> GetWalletByUserIdAsync(int userId)
+        {
+            try
+            {
+                var wallet = await _context.Wallets
+                    .Include(w => w.User)
+                    .FirstOrDefaultAsync(w => w.UserId == userId);
+
+                if(wallet == null)
+                {
+                    throw new KeyNotFoundException($"Wallet for user with ID {userId} not found.");
+                }
+
+                return wallet;
+            }
+            catch (KeyNotFoundException knfEx)
+            {
+                throw new KeyNotFoundException($"Wallet for user with ID {userId} not found.", knfEx);
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException("An error occurred while fetching the wallet by user ID.", ex);
+            }
+        } 
+        
         public async Task<IEnumerable<Wallet>> GetAllAsync()
         {
             try
