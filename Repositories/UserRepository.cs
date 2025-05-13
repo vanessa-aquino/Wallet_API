@@ -1,10 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using WalletAPI.Data;
+using WalletAPI.Interfaces;
 using WalletAPI.Models;
+using WalletAPI.Data;
 
 namespace WalletAPI.Repositories
 {
-    public class UserRepository
+    public class UserRepository : IUserRepository
     {
         private readonly AppDbContext _context;
 
@@ -44,7 +45,7 @@ namespace WalletAPI.Repositories
             }
             catch (KeyNotFoundException knfEx)
             {
-                throw new KeyNotFoundException ("User not found", knfEx);
+                throw new KeyNotFoundException("User not found", knfEx);
             }
             catch (Exception ex)
             {
@@ -52,11 +53,35 @@ namespace WalletAPI.Repositories
             }
         }
 
+        public async Task<User> GetByEmailAsync(string email)
+        {
+            try
+            {
+                var userEmail = await _context.Users
+                    .FirstOrDefaultAsync(u => u.Email == email);
+
+                if (userEmail == null)
+                {
+                    throw new KeyNotFoundException($"User with this email {email} not found.");
+                }
+
+                return userEmail;
+            }
+            catch (KeyNotFoundException knfEx)
+            {
+                throw new KeyNotFoundException("User not found", knfEx);
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException("An error occurred while fetching the user by email.", ex);
+            }
+        }
+
         public async Task<IEnumerable<User>> GetAllAsync()
         {
             try
             {
-                return await _context.Users.Include(u => u.Wallet).ToListAsync();
+                return await _context.Users.Include(u => u.Wallet).AsNoTracking().ToListAsync();
             }
             catch (Exception ex)
             {
@@ -69,15 +94,14 @@ namespace WalletAPI.Repositories
             try
             {
                 var existingUser = await _context.Users
-                    .AsNoTracking()
                     .FirstOrDefaultAsync(u => u.Id == user.Id);
 
-                if(existingUser == null)
+                if (existingUser == null)
                 {
                     throw new KeyNotFoundException($"User with id {user.Id} not found");
                 }
 
-                if(string.IsNullOrWhiteSpace(user.FirstName) || string.IsNullOrWhiteSpace(user.Email))
+                if (string.IsNullOrWhiteSpace(user.FirstName) || string.IsNullOrWhiteSpace(user.Email))
                 {
                     throw new ArgumentException("User data is incomplete or invalid");
                 }
@@ -98,7 +122,6 @@ namespace WalletAPI.Repositories
                 throw new InvalidOperationException("An unexpected error occurred.", ex);
             }
         }
-
         public async Task<bool> DeleteAsync(int id)
         {
             try
@@ -114,7 +137,7 @@ namespace WalletAPI.Repositories
             }
             catch (KeyNotFoundException knfEx)
             {
-                throw new("User not found", knfEx);
+                throw new KeyNotFoundException("User not found", knfEx);
             }
             catch (DbUpdateException dbEx)
             {
