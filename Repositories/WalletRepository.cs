@@ -12,7 +12,7 @@ namespace WalletAPI.Repositories
         public WalletRepository(AppDbContext context)
         {
             _context = context;
-        }
+        } 
 
         public async Task<Wallet> AddAsync(Wallet wallet)
         {

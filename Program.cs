@@ -1,10 +1,10 @@
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Localization;
-using System.Globalization;
-using WalletAPI.Data;
+using Microsoft.EntityFrameworkCore;
 using WalletAPI.Repositories;
-using WalletAPI.Services;
+using System.Globalization;
 using WalletAPI.Interfaces;
+using WalletAPI.Services;
+using WalletAPI.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
