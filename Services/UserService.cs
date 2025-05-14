@@ -6,6 +6,7 @@ using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.IdentityModel.Tokens.Jwt;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace WalletAPI.Services
 {
@@ -13,11 +14,16 @@ namespace WalletAPI.Services
     {
         private readonly IUserRepository _userRepository;
         private readonly IConfiguration _configuration;
+        private readonly IMemoryCache _cache;
+        private readonly ILogger<UserService> _logger;
+        private const string UserCacheKey = "User_";
 
-        public UserService(IUserRepository userRepository, IConfiguration configuration)
+        public UserService(IUserRepository userRepository, IConfiguration configuration, IMemoryCache cache, ILogger<UserService> logger)
         {
             _userRepository = userRepository;
             _configuration = configuration;
+            _cache = cache;
+            _logger = logger;
         }
 
         public string GenerateToken(User user)
@@ -33,9 +39,9 @@ namespace WalletAPI.Services
                 new Claim(ClaimTypes.Role, "User")
             };
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("secret-key"));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("secretKey"));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-            var expiration = DateTime.Now.AddDays(1);
+            var expiration = GetTokenExpiration();
 
             var token = new JwtSecurityToken(
                     issuer: issuer,
@@ -50,16 +56,22 @@ namespace WalletAPI.Services
 
         public async Task<UserDto> AuthenticateAsync(string email, string password)
         {
-            var user = await _userRepository.GetByEmailAsync(email);
+            var cacheKey = $"{UserCacheKey}{email}";
 
-            if (user == null)
+            if (!_cache.TryGetValue(cacheKey, out User user))
             {
-                throw new UnauthorizedAccessException("Invalid email or password.");
-            }
+                user = await _userRepository.GetByEmailAsync(email);
+                if (user == null || !user.VerifyPassword(password))
+                {
+                    _logger.LogWarning($"Failed login attempt for email : {email}");
+                    throw new UnauthorizedAccessException("Invalid email or password.");
+                }
 
-            if (!user.VerifyPassword(password))
-            {
-                throw new UnauthorizedAccessException("Invalid password.");
+                var cacheOptions = new MemoryCacheEntryOptions()
+                    .SetAbsoluteExpiration(TimeSpan.FromMinutes(30))
+                    .SetSlidingExpiration(TimeSpan.FromMinutes(10));
+
+                _cache.Set(cacheKey, user, cacheOptions);
             }
 
             var token = GenerateToken(user);
@@ -80,18 +92,20 @@ namespace WalletAPI.Services
 
             if (user == null)
             {
+                _logger.LogWarning($"Attempted password change for non-existent user ID {userId}");
                 throw new KeyNotFoundException($"User with ID {userId} not found.");
             }
 
             if (!user.VerifyPassword(currentPassword))
             {
+                _logger.LogWarning($"Incorrect current password for user ID {userId}");
                 throw new UnauthorizedAccessException("Current password is incorrect.");
             }
 
             user.SetPassword(newPassword);
             await _userRepository.UpdateAsync(user);
+            _logger.LogInformation($"Password changed successfully for user ID {userId}");
         }
-
 
         public async Task ValidateEmailAsync(string email)
         {
@@ -101,9 +115,9 @@ namespace WalletAPI.Services
             }
 
             var existingUser = await _userRepository.GetByEmailAsync(email);
-
             if (existingUser != null)
             {
+                _logger.LogWarning($"Attempt to register with already in use email: {email}");
                 throw new InvalidOperationException("This email is already in use.");
             }
         }
@@ -111,9 +125,10 @@ namespace WalletAPI.Services
         public async Task<UserDto> RegisterAsync(User user, string password)
         {
             await ValidateEmailAsync(user.Email);
-
             user.SetPassword(password);
             var createdUSer = await _userRepository.AddAsync(user);
+
+            _logger.LogInformation($"New user registered with ID {createdUSer.Id}");
             var token = GenerateToken(createdUSer);
 
             return new UserDto
@@ -135,11 +150,6 @@ namespace WalletAPI.Services
                 throw new KeyNotFoundException($"User with ID {userId} not found.");
             }
 
-            if (string.IsNullOrWhiteSpace(firstName) || string.IsNullOrWhiteSpace(lastName) || string.IsNullOrWhiteSpace(email))
-            {
-                throw new ArgumentException("Invalid data: First name, last name, and email are required.");
-            }
-
             var existingUser = await _userRepository.GetByEmailAsync(email);
             if (existingUser != null && existingUser.Id != userId)
             {
@@ -148,8 +158,11 @@ namespace WalletAPI.Services
 
             user.UpdateProfile(firstName, lastName, email, phone);
             await _userRepository.UpdateAsync(user);
+            
+            _logger.LogInformation($"USer profile updated for user ID {userId}");
+            _cache.Remove($"{UserCacheKey}{email}");
 
-            var userDto = new UserDto
+            return new UserDto 
             {
                 Id = userId,
                 FirstName = firstName,
@@ -158,7 +171,6 @@ namespace WalletAPI.Services
                 Token = GenerateToken(user)
             };
 
-            return userDto;
         }
 
         public async Task ActivateUserAsync(int userId)
@@ -184,11 +196,11 @@ namespace WalletAPI.Services
             user.Deactivate();
             await _userRepository.UpdateAsync(user);
         }
-    
+
         public async Task<TimeSpan> GetAccountAgeAsync(int userId)
         {
             var user = await _userRepository.GetByIdAsync(userId);
-            if(user == null)
+            if (user == null)
             {
                 throw new KeyNotFoundException($"User with ID {userId} not found.");
             }
