@@ -39,7 +39,7 @@ namespace WalletAPI.Services
                 new Claim(ClaimTypes.Role, "User")
             };
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("secretKey"));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
             var expiration = GetTokenExpiration();
 
@@ -158,11 +158,12 @@ namespace WalletAPI.Services
 
             user.UpdateProfile(firstName, lastName, email, phone);
             await _userRepository.UpdateAsync(user);
-            
-            _logger.LogInformation($"USer profile updated for user ID {userId}");
-            _cache.Remove($"{UserCacheKey}{email}");
 
-            return new UserDto 
+            _logger.LogInformation($"USer profile updated for user ID {userId}");
+            _cache.Remove($"{UserCacheKey}{userId}");
+            _cache.Remove($"{UserCacheKey}{user.Email}");
+
+            return new UserDto
             {
                 Id = userId,
                 FirstName = firstName,
@@ -199,12 +200,26 @@ namespace WalletAPI.Services
 
         public async Task<TimeSpan> GetAccountAgeAsync(int userId)
         {
-            var user = await _userRepository.GetByIdAsync(userId);
-            if (user == null)
+            var cacheKey = $"{UserCacheKey}AccountAge_{userId}";
+
+            if (!_cache.TryGetValue(cacheKey, out TimeSpan accountAge))
             {
-                throw new KeyNotFoundException($"User with ID {userId} not found.");
+                var user = await _userRepository.GetByIdAsync(userId);
+                if (user == null)
+                {
+                    throw new KeyNotFoundException($"User with ID {userId} not found.");
+                }
+
+                accountAge = user.GetAccountAge();
+
+                var cacheOptions = new MemoryCacheEntryOptions()
+                    .SetAbsoluteExpiration(TimeSpan.FromMinutes(30));
+
+                _cache.Set(cacheKey, accountAge, cacheOptions);
             }
-            return user.GetAccountAge();
+
+            return accountAge;
+
         }
 
         public DateTime GetTokenExpiration()
