@@ -1,12 +1,12 @@
-﻿using WalletAPI.Repositories;
+﻿using Microsoft.Extensions.Caching.Memory;
+using System.IdentityModel.Tokens.Jwt;
+using Microsoft.IdentityModel.Tokens;
+using System.Security.Claims;
 using WalletAPI.Models.DTOs;
+using WalletAPI.Exceptions;
 using WalletAPI.Interfaces;
 using WalletAPI.Models;
-using System.Security.Claims;
-using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using System.IdentityModel.Tokens.Jwt;
-using Microsoft.Extensions.Caching.Memory;
 
 namespace WalletAPI.Services
 {
@@ -64,7 +64,7 @@ namespace WalletAPI.Services
                 if (user == null || !user.VerifyPassword(password))
                 {
                     _logger.LogWarning($"Failed login attempt for email : {email}");
-                    throw new UnauthorizedAccessException("Invalid email or password.");
+                    throw new InvalidCredentialsException();
                 }
 
                 var cacheOptions = new MemoryCacheEntryOptions()
@@ -93,13 +93,13 @@ namespace WalletAPI.Services
             if (user == null)
             {
                 _logger.LogWarning($"Attempted password change for non-existent user ID {userId}");
-                throw new KeyNotFoundException($"User with ID {userId} not found.");
+                throw new UserNotFoundException(userId);
             }
 
             if (!user.VerifyPassword(currentPassword))
             {
                 _logger.LogWarning($"Incorrect current password for user ID {userId}");
-                throw new UnauthorizedAccessException("Current password is incorrect.");
+                throw new InvalidCredentialsException();
             }
 
             user.SetPassword(newPassword);
@@ -118,7 +118,7 @@ namespace WalletAPI.Services
             if (existingUser != null)
             {
                 _logger.LogWarning($"Attempt to register with already in use email: {email}");
-                throw new InvalidOperationException("This email is already in use.");
+                throw new EmailAlreadyInUseException(email);
             }
         }
 
@@ -153,16 +153,23 @@ namespace WalletAPI.Services
             var existingUser = await _userRepository.GetByEmailAsync(email);
             if (existingUser != null && existingUser.Id != userId)
             {
-                throw new InvalidOperationException("Email is already in use by another user.");
+                throw new EmailAlreadyInUseException(email);
             }
 
             user.UpdateProfile(firstName, lastName, email, phone);
             await _userRepository.UpdateAsync(user);
 
-            _logger.LogInformation($"USer profile updated for user ID {userId}");
-            _cache.Remove($"{UserCacheKey}{userId}");
-            _cache.Remove($"{UserCacheKey}{user.Email}");
+            _logger.LogInformation($"User profile updated for user ID {userId}");
 
+            var cacheKey = $"{UserCacheKey}{user.Email}";
+            _cache.Remove(cacheKey);
+
+            _cache.Set(cacheKey, user, new MemoryCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(30),
+                SlidingExpiration = TimeSpan.FromMinutes(10)
+            });
+       
             return new UserDto
             {
                 Id = userId,
@@ -179,7 +186,7 @@ namespace WalletAPI.Services
             var user = await _userRepository.GetByIdAsync(userId);
             if (user == null)
             {
-                throw new KeyNotFoundException($"User with ID {userId} not found.");
+                throw new UserNotFoundException(userId);
             }
 
             user.Activate();
@@ -191,7 +198,7 @@ namespace WalletAPI.Services
             var user = await _userRepository.GetByIdAsync(userId);
             if (user == null)
             {
-                throw new KeyNotFoundException($"User with ID {userId} not found.");
+                throw new UserNotFoundException(userId);
             }
 
             user.Deactivate();
@@ -207,7 +214,7 @@ namespace WalletAPI.Services
                 var user = await _userRepository.GetByIdAsync(userId);
                 if (user == null)
                 {
-                    throw new KeyNotFoundException($"User with ID {userId} not found.");
+                    throw new UserNotFoundException(userId);
                 }
 
                 accountAge = user.GetAccountAge();

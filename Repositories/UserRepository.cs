@@ -2,6 +2,7 @@
 using WalletAPI.Interfaces;
 using WalletAPI.Models;
 using WalletAPI.Data;
+using WalletAPI.Exceptions;
 
 namespace WalletAPI.Repositories
 {
@@ -38,7 +39,7 @@ namespace WalletAPI.Repositories
 
                 if (user == null)
                 {
-                    throw new KeyNotFoundException($"User with ID {id} not found.");
+                    throw new UserNotFoundException(id);
                 }
 
                 return user;
@@ -98,7 +99,7 @@ namespace WalletAPI.Repositories
 
                 if (existingUser == null)
                 {
-                    throw new KeyNotFoundException($"User with id {user.Id} not found");
+                    throw new UserNotFoundException(user.Id);
                 }
 
                 if (string.IsNullOrWhiteSpace(user.FirstName) || string.IsNullOrWhiteSpace(user.Email))
@@ -129,7 +130,7 @@ namespace WalletAPI.Repositories
                 var user = await _context.Users.FindAsync(id);
                 if (user == null)
                 {
-                    throw new KeyNotFoundException($"User with ID {id} not found.");
+                    throw new UserNotFoundException(id);
                 }
                 _context.Users.Remove(user);
                 await _context.SaveChangesAsync();

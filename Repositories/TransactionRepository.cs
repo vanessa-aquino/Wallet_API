@@ -1,10 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using WalletAPI.Data;
+using WalletAPI.Interfaces;
 using WalletAPI.Models;
+using WalletAPI.Data;
 
 namespace WalletAPI.Repositories
 {
-    public class TransactionRepository
+    public class TransactionRepository : ITransactionRepository
     {
         private readonly AppDbContext _context;
 
