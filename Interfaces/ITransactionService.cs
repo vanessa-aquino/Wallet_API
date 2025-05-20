@@ -23,6 +23,6 @@ namespace WalletAPI.Interfaces
         // validacao e utilidades
         Task ValidateTransactionAsync(Transaction transaction);
         Task ValidateFundsAsync(int walletId, double amount);
-        Task<double> CalculateTransactionFeesAsync(double amount);
+        Task<double> CalculateTransactionFeesAsync(double amount, TransactionType transactionType, double tax, int userId);
     }
 }

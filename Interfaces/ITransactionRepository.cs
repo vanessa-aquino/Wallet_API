@@ -9,5 +9,6 @@ namespace WalletAPI.Interfaces
         Task<IEnumerable<Transaction>> GetAllAsync();
         Task UpdateAsync(Transaction transaction); 
         Task<bool> DeleteAsync(int id);
+        public Task<bool> IsFirstWithdrawOfMonthAsync(int userId);
     }
 }

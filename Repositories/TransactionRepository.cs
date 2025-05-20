@@ -2,6 +2,7 @@
 using WalletAPI.Interfaces;
 using WalletAPI.Models;
 using WalletAPI.Data;
+using WalletAPI.Models.Enums;
 
 namespace WalletAPI.Repositories
 {
@@ -123,6 +124,20 @@ namespace WalletAPI.Repositories
             {
                 throw new InvalidOperationException("An unexpected error occurred.", ex);
             }
+        }
+
+        public async Task<bool> IsFirstWithdrawOfMonthAsync(int userId)
+        {
+            var now = DateTime.UtcNow;
+            var firstDayOfMonth = new DateTime(now.Year, now.Month, 1);
+
+            var thereWasdraw = await _context.Transactions
+                .AnyAsync(t => t.Status == TransactionStatus.Completed &&
+                            t.UserId == userId &&
+                            t.TransactionType == TransactionType.Withdraw &&
+                            t.Date >= firstDayOfMonth);
+
+            return !thereWasdraw;
         }
     }
 }
