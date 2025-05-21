@@ -8,6 +8,7 @@ namespace WalletAPI.Services
     {
         private readonly ITransactionRepository _transactionRepository;
         private readonly Wallet _wallet;
+        private const double TransactionLimit = 10000.00;
 
         public async Task<double> CalculateTransactionFeesAsync(double amount, TransactionType transactionType, double tax, int userId)
         {
