@@ -21,10 +21,17 @@
             : base($"This user: {userId} does not have permission to perform this operation. As this wallet: {walletId} belongs to another user.") { }
     }
 
+    public class InsufficientFundsException : TransactionException
+    {
+        public InsufficientFundsException()
+            : base($"Insufficient balance") { }
+    }
+
     public class TransactionLimitExceededException : TransactionException
     {
         public TransactionLimitExceededException(double amount, double limit)
             : base($"Transaction amount ({amount:C}) exceeds the allowed limit of ({limit:C}).") { }
     }
+
 }
 

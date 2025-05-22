@@ -104,7 +104,7 @@ namespace WalletAPI.Repositories
             try
             {
                 var transaction = await _context.Transactions.FindAsync(id);
-                if(transaction == null)
+                if (transaction == null)
                 {
                     throw new KeyNotFoundException($"Transaction with ID {id} not found.");
                 }
@@ -139,6 +139,68 @@ namespace WalletAPI.Repositories
 
             return !thereWasdraw;
         }
+
+        public async Task<int> CountByWalletIdAsync(int walletId)
+        {
+            try
+            {
+                return await _context.Transactions
+                    .Where(t => t.WalletId == walletId)
+                    .CountAsync();
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException("An error occurred while counting transactions.", ex);
+            }
+        }
+
+        public async Task<IEnumerable<Transaction>> GetListTransactionsByStatusAsync(TransactionStatus status, int walletId)
+        {
+            try
+            {
+                return await _context.Transactions
+                    .Where(t => t.Status == status && t.WalletId == walletId)
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException("An error occurred while fetching the transaction.", ex);
+            }
+        }
+
+        public async Task<IEnumerable<Transaction>> GetListTransactionsByTypeAsync(TransactionType type, int walletId)
+        {
+            try
+            {
+                return await _context.Transactions
+                    .Where(t => t.TransactionType == type && t.WalletId == walletId)
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException("An error occurred while fetching the transaction.", ex);
+            }
+        }
+
+        public async Task<IEnumerable<Transaction>> GetTransactionHistoryByDate(int walletId, DateTime? startDate, DateTime? endDate)
+        {
+            try
+            {
+                var query = _context.Transactions
+                    .Where(t => t.WalletId == walletId);
+
+                if (startDate.HasValue) query = query.Where(t => t.Date >= startDate.Value);
+                if (endDate.HasValue) query = query.Where(t => t.Date <= endDate.Value);
+
+                return await query
+                    .OrderByDescending(t => t.Date)
+                    .ToListAsync();
+            }
+            catch(Exception ex)
+            {
+
+                throw new InvalidOperationException("An error occurred while fetching the transaction history.", ex);
+            }
+        }
     }
 }
-
