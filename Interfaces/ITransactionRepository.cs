@@ -15,5 +15,6 @@ namespace WalletAPI.Interfaces
         Task<IEnumerable<Transaction>> GetListTransactionsByStatusAsync(TransactionStatus status, int walletId);
         Task<IEnumerable<Transaction>> GetListTransactionsByTypeAsync(TransactionType type, int walletId);
         Task<IEnumerable<Transaction>> GetTransactionHistoryByDate(int walletId, DateTime? startDate, DateTime? endDate);
+        Task<IEnumerable<Transaction>> GetByWalletIdAndDateRangeAsync(int walletId, DateTime minDate, DateTime maxDate);
     }
 }

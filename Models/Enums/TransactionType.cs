@@ -5,7 +5,6 @@
         Deposit,
         Withdraw,
         Transfer,
-        Pix,
         Refund
     }
 }

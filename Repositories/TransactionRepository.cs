@@ -202,5 +202,14 @@ namespace WalletAPI.Repositories
                 throw new InvalidOperationException("An error occurred while fetching the transaction history.", ex);
             }
         }
+    
+        public async Task<IEnumerable<Transaction>> GetByWalletIdAndDateRangeAsync(int walletId, DateTime minDate, DateTime maxDate)
+        {
+            return await _context.Transactions
+                .Where(t => t.WalletId == walletId && t.Date >= minDate && t.Date <= maxDate)
+                .OrderBy(t => t.Date)
+                .ToListAsync();
+        }
     }
+
 }

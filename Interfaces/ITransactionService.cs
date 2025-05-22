@@ -1,4 +1,6 @@
-﻿using WalletAPI.Models;
+﻿using Microsoft.AspNetCore.Mvc;
+using WalletAPI.Models;
+using WalletAPI.Models.DTOs;
 using WalletAPI.Models.Enums;
 
 namespace WalletAPI.Interfaces
@@ -7,10 +9,9 @@ namespace WalletAPI.Interfaces
     {
         // Criacao e manipulacao de transacoes
         Task<Transaction> CreateTransactionAsync(Transaction transaction);
-        Task<Transaction> DepositAsync(int walletId, double amount, string? description);
-        Task<Transaction> WithdrawAsync(int walletId, double amount, string? description);
-        Task<Transaction> TransferAsync(int sourceWalletId, int destinationWalletID, double amount, string? description);
-        Task<Transaction> PixAsync(int sourceWalletId, int destinationWalletID, double amount, string? description);
+        Task<Transaction> DepositAsync(WithdrawAndDepositTransactionDto dto);
+        Task<Transaction> WithdrawAsync(WithdrawAndDepositTransactionDto dto);
+        Task<Transaction> TransferAsync(TransferTransactionDto dto);
         Task RevertTransactionAsync(int transactionId);
         
         // Consultas e relatorios
@@ -19,11 +20,11 @@ namespace WalletAPI.Interfaces
         Task<double> GetBalanceAsync(int walletId);
         Task<IEnumerable<Transaction>> GetTransactionByTypeAsync(int walletId, TransactionType type);
         Task<IEnumerable<Transaction>> GetTransactionByStatusAsync(int walletId, TransactionStatus status);
-        Task<string> GenerateTransactionReportAsync(int walletId);
+        Task<FileContentResult> GenerateTransactionReportAsync(int walletId, DateTime? startDate, DateTime? endDate);
 
         // validacao e utilidades
         Task ValidateTransactionAsync(Transaction transaction);
         Task ValidateFundsAsync(int walletId, double amount);
-        Task<double> CalculateTransactionFeesAsync(double amount, TransactionType transactionType, double tax, int userId);
+        double CalculateTransactionFeesAsync(double amount, TransactionType transactionType);
     }
 }

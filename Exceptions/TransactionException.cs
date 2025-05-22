@@ -1,4 +1,6 @@
-﻿namespace WalletAPI.Exceptions
+﻿using System.Transactions;
+
+namespace WalletAPI.Exceptions
 {
     public class TransactionException : Exception
     {
@@ -33,5 +35,16 @@
             : base($"Transaction amount ({amount:C}) exceeds the allowed limit of ({limit:C}).") { }
     }
 
+    public class TransactionCannotBeReversedException : TransactionException
+    {
+        public TransactionCannotBeReversedException()
+            : base($"This transaction cannot be reversed.") { }
+    }
+
+    public class NotFoundException : TransactionException
+    {
+        public NotFoundException(int transactionId) 
+            : base($"Transaction with ID: {transactionId} not found.") { }
+    }
 }
 
