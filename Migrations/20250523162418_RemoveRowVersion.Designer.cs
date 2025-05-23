@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using WalletAPI.Data;
 
@@ -11,9 +12,11 @@ using WalletAPI.Data;
 namespace WalletAPI.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250523162418_RemoveRowVersion")]
+    partial class RemoveRowVersion
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -94,11 +97,10 @@ namespace WalletAPI.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<string>("Phone")
-                        .IsRequired()
-                        .HasColumnType("longtext");
+                    b.Property<int>("Phone")
+                        .HasColumnType("int");
 
-                    b.Property<int?>("WalletID")
+                    b.Property<int>("WalletID")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
@@ -157,7 +159,9 @@ namespace WalletAPI.Migrations
                 {
                     b.HasOne("WalletAPI.Models.User", "User")
                         .WithOne("Wallet")
-                        .HasForeignKey("WalletAPI.Models.Wallet", "UserId");
+                        .HasForeignKey("WalletAPI.Models.Wallet", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("User");
                 });
@@ -166,7 +170,8 @@ namespace WalletAPI.Migrations
                 {
                     b.Navigation("Transactions");
 
-                    b.Navigation("Wallet");
+                    b.Navigation("Wallet")
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("WalletAPI.Models.Wallet", b =>

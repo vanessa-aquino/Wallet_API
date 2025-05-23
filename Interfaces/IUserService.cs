@@ -7,7 +7,7 @@ namespace WalletAPI.Interfaces
     {
         string GenerateToken(User user);
         Task<UserDto> AuthenticateAsync(string email, string password);
-        Task<UserDto> UpdateProfileAsync(int userId, string firstName, string lastName, string email, int phone);
+        Task<UserDto> UpdateProfileAsync(int userId, string firstName, string lastName, string email, string phone);
         Task ChangePasswordAsync(int userId, string currentPassword, string newPassword);
         Task<UserDto> RegisterAsync(User user, string password);
         Task ValidateEmailAsync(string email);

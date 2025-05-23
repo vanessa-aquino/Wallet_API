@@ -3,16 +3,18 @@ using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using WalletAPI.Models.DTOs;
-using WalletAPI.Exceptions;
+using WalletAPI.Exceptions;  
 using WalletAPI.Interfaces;
 using WalletAPI.Models;
 using System.Text;
+using WalletAPI.Data;
 
 namespace WalletAPI.Services
 {
     public class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
+        private readonly IWalletService _walletService;
         private readonly IConfiguration _configuration;
         private readonly IMemoryCache _cache;
         private readonly ILogger<UserService> _logger;
@@ -124,24 +126,27 @@ namespace WalletAPI.Services
 
         public async Task<UserDto> RegisterAsync(User user, string password)
         {
+            Console.WriteLine("Entrou no RegisterAsync");
             await ValidateEmailAsync(user.Email);
             user.SetPassword(password);
-            var createdUSer = await _userRepository.AddAsync(user);
+            Console.WriteLine($"Hash gerado: {user.PasswordHash}");
+            var createdUser = await _userRepository.AddAsync(user);
+            //await _walletService.CreateWalletAsync(createdUser);
 
-            _logger.LogInformation($"New user registered with ID {createdUSer.Id}");
-            var token = GenerateToken(createdUSer);
+            _logger.LogInformation($"New user registered with ID {createdUser.Id}");
+            var token = GenerateToken(createdUser);
 
             return new UserDto
             {
-                Id = createdUSer.Id,
-                FirstName = createdUSer.FirstName,
-                LastName = createdUSer.LastName,
-                Email = user.Email,
+                Id = createdUser.Id,
+                FirstName = createdUser.FirstName,
+                LastName = createdUser.LastName,
+                Email = createdUser.Email,
                 Token = token
             };
         }
 
-        public async Task<UserDto> UpdateProfileAsync(int userId, string firstName, string lastName, string email, int phone)
+        public async Task<UserDto> UpdateProfileAsync(int userId, string firstName, string lastName, string email, string phone)
         {
             var user = await _userRepository.GetByIdAsync(userId);
 

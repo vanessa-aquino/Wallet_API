@@ -17,7 +17,8 @@ namespace WalletAPI.Data
             modelBuilder.Entity<User>()
                 .HasOne(u => u.Wallet)
                 .WithOne(w => w.User)
-                .HasForeignKey<Wallet>(w => w.UserId);
+                .HasForeignKey<Wallet>(w => w.UserId)
+                .IsRequired(false);
         
             // Wallet -> Transactions (1:N)
             modelBuilder.Entity<Wallet>()

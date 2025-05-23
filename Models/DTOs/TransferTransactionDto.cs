@@ -1,6 +1,6 @@
 ﻿namespace WalletAPI.Models.DTOs
 {
-    public class TransferDto
+    public class TransferTransactionDto
     {
         public int SourceWalletId { get; set; }
         public int DestinationWalletId { get; set; }

@@ -10,20 +10,21 @@ namespace WalletAPI.Models
         public string LastName { get; set; }
         public DateTime BirthDate { get; set; }
         public string Email { get; set; }
-        public int Phone { get; set; }
+        public string Phone { get; set; }
         public string PasswordHash { get; set; }
         public DateTime CreatedAt { get; set; }
         public bool Active { get; set; }
-        public int WalletID {  get; set; }
-        public Wallet Wallet { get; set; }
+        public int? WalletID { get; set; }
+        public Wallet? Wallet { get; set; }
         public List<Transaction> Transactions { get; set; }
-        
-        [Timestamp]
-        public byte[] RowVersion { get; set; } 
 
-        public User() { }
+        public User()
+        {
+            CreatedAt = DateTime.UtcNow;
+            Active = true;
+        }
 
-        public User(int id, string firstName, string lastName, DateTime birthDate, string email, int phone, string passwordHash)
+        public User(int id, string firstName, string lastName, DateTime birthDate, string email, string phone, string passwordHash)
         {
             Id = id;
             FirstName = firstName;
@@ -61,7 +62,7 @@ namespace WalletAPI.Models
             Active = false;
         }
 
-        public void UpdateProfile(string firstName, string lastName,  string email, int phone)
+        public void UpdateProfile(string firstName, string lastName, string email, string phone)
         {
             FirstName = firstName;
             LastName = lastName;

@@ -17,6 +17,7 @@ namespace WalletAPI.Repositories
          
         public async Task<User> AddAsync(User user)
         {
+            Console.WriteLine("Entrou no AddAsync");
             try
             {
                 _context.Users.Add(user);
@@ -54,23 +55,11 @@ namespace WalletAPI.Repositories
             }
         }
 
-        public async Task<User> GetByEmailAsync(string email)
+        public async Task<User?> GetByEmailAsync(string email)
         {
             try
             {
-                var userEmail = await _context.Users
-                    .FirstOrDefaultAsync(u => u.Email == email);
-
-                if (userEmail == null)
-                {
-                    throw new KeyNotFoundException($"User with this email {email} not found.");
-                }
-
-                return userEmail;
-            }
-            catch (KeyNotFoundException knfEx)
-            {
-                throw new KeyNotFoundException("User not found", knfEx);
+                return await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
             }
             catch (Exception ex)
             {
