@@ -20,7 +20,7 @@ namespace WalletAPI.Services
         private readonly IUserRepository _userRepository;
         private readonly AppDbContext _context;
         private readonly ILogger<TransactionService> _logger;
-        private const double TransactionLimit = 10000.00;
+        private const decimal TransactionLimit = 10000.00m;
 
         public TransactionService(ITransactionRepository transactionRepository, IWalletRepository walletRepository, IUserRepository userRepository, IWalletService walletService, IMemoryCache cache, ILogger<TransactionService> logger)
         {
@@ -54,7 +54,21 @@ namespace WalletAPI.Services
             return input;
         }
 
-        public double CalculateTransactionFeesAsync(double amount, TransactionType transactionType)
+        private TransactionResponseDto MapToDto(Transaction transaction)
+        {
+            return new TransactionResponseDto
+            {
+                Id = transaction.Id,
+                Amount = transaction.Amount,
+                TransactionType = transaction.TransactionType.ToString(),
+                Date = transaction.Date,
+                Status = transaction.Status.ToString(),
+                Description = transaction.Description,
+                WalletId = transaction.WalletId
+            };
+        }
+
+        public decimal CalculateTransactionFeesAsync(decimal amount, TransactionType transactionType)
         {
             if (!TransactionFeeTable.FeeRates.ContainsKey(transactionType))
             {
@@ -149,9 +163,15 @@ namespace WalletAPI.Services
             };
         }
 
-        public async Task<double> GetBalanceAsync(int walletId)
+        public async Task<decimal> GetBalanceAsync(int walletId)
         {
             return await _walletService.GetBalanceAsync(walletId);
+        }
+
+        public async Task<TransactionResponseDto> GetByIdAsync(int id)
+        {
+            var transaction = await _transactionRepository.GetByIdAsync(id);
+            return MapToDto(transaction);
         }
 
         public async Task<int> GetTotalTransactionsAsync(int walletId)
@@ -289,7 +309,7 @@ namespace WalletAPI.Services
 
         }
 
-        public async Task ValidateFundsAsync(int walletId, double amount)
+        public async Task ValidateFundsAsync(int walletId, decimal amount)
         {
             var wallet = await _walletRepository.GetByIdAsync(walletId);
 

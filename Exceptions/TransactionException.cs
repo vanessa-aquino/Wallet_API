@@ -31,7 +31,7 @@ namespace WalletAPI.Exceptions
 
     public class TransactionLimitExceededException : TransactionException
     {
-        public TransactionLimitExceededException(double amount, double limit)
+        public TransactionLimitExceededException(decimal amount, decimal limit)
             : base($"Transaction amount ({amount:C}) exceeds the allowed limit of ({limit:C}).") { }
     }
 

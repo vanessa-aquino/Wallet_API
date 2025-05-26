@@ -78,11 +78,11 @@ namespace WalletAPI.Services
             };
         }
 
-        public async Task<double> GetBalanceAsync(int walletId)
+        public async Task<decimal> GetBalanceAsync(int walletId)
         {
             var cacheKey = $"{WalletCacheKey}Balance_{walletId}";
 
-            if (!_cache.TryGetValue(cacheKey, out double balance))
+            if (!_cache.TryGetValue(cacheKey, out decimal balance))
             {
                 _logger.LogInformation($"Fetching balance for wallet ID {walletId} from the database.");
                 var wallet = await _walletRepository.GetByIdAsync(walletId);
@@ -130,7 +130,7 @@ namespace WalletAPI.Services
 
         }
 
-        public async Task ValidateSufficientFunds(int walletId, double amount)
+        public async Task ValidateSufficientFunds(int walletId, decimal amount)
         {
             var balance = await GetBalanceAsync(walletId);
             if(balance < amount)

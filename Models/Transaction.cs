@@ -5,7 +5,7 @@ namespace WalletAPI.Models
     public class Transaction
     {
         public int Id { get; set; }
-        public double Amount { get; set; }
+        public decimal Amount { get; set; }
         public TransactionType TransactionType { get; set; }
         public DateTime Date { get; set; }
         public int UserId { get; set; }
@@ -17,7 +17,7 @@ namespace WalletAPI.Models
 
         public Transaction() { }
 
-        public Transaction(double amount,  TransactionType transactionType, TransactionStatus transactionStatus, string? description)
+        public Transaction(decimal amount,  TransactionType transactionType, TransactionStatus transactionStatus, string? description)
         {
             Amount = amount;
             TransactionType = transactionType;

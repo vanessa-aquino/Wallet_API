@@ -16,11 +16,12 @@ namespace WalletAPI.Interfaces
         // Consultas e relatorios
         Task<IEnumerable<Transaction>> GetTransactionHistoryAsync(TransactionFilterDto filterDto);
         Task<int> GetTotalTransactionsAsync(int walletId);
-        Task<double> GetBalanceAsync(int walletId);
+        Task<Transaction> GetByIdAsync(int id);
+        Task<decimal> GetBalanceAsync(int walletId);
 
         // validacao e utilidades
         Task ValidateTransactionAsync(Transaction transaction);
-        Task ValidateFundsAsync(int walletId, double amount);
-        double CalculateTransactionFeesAsync(double amount, TransactionType transactionType);
+        Task ValidateFundsAsync(int walletId, decimal amount);
+        decimal CalculateTransactionFeesAsync(decimal amount, TransactionType transactionType);
     }
 }

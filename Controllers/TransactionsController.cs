@@ -8,7 +8,6 @@ namespace WalletAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
     public class TransactionsController : ControllerBase
     {
         private readonly ITransactionService _transactionService;
@@ -19,17 +18,51 @@ namespace WalletAPI.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllTransactions()
+        public async Task<ActionResult<IEnumerable<Transaction>>> GetAllTransactions([FromQuery] TransactionFilterDto filterDto)
         {
-            var transactions = await _transactionService.GetTotalTransactionsAsync();
+            try
+            {
+
+                var transactions = await _transactionService.GetTransactionHistoryAsync(filterDto);
+                return Ok(transactions);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
         }
+
+        [HttpGet("{id}")]
+        public async Task<ActionResult<TransactionResponseDto>> GetTransactionById(int id)
+        {
+            try
+            {
+                var transaction = await _transactionService.GetByIdAsync(id);
+                return Ok(transaction);
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound($"Transactions with ID {id} not found.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+
+
 
 
         //[HttpPost("deposit")]
         //public async Task<ActionResult<Transaction>> Deposit([FromBody] WithdrawAndDepositTransactionDto dto)
         //{
         //    if(!ModelState.IsValid) return BadRequest(ModelState);
-            
+
         //    try
         //    {
         //        var transaction = await _transactionService.DepositAsync(dto);

@@ -8,7 +8,7 @@ namespace WalletAPI.Interfaces
         Task<WalletDto> CreateWalletAsync(User user);
         Task ActivateWalletAsync(int walletId);
         Task DeactivateWalletAsync(int walletId);
-        Task<double> GetBalanceAsync(int walletId);
-        Task ValidateSufficientFunds(int walletId, double amount);
+        Task<decimal> GetBalanceAsync(int walletId);
+        Task ValidateSufficientFunds(int walletId, decimal amount);
     }
 }
