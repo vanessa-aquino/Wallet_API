@@ -16,7 +16,7 @@ namespace WalletAPI.Models
         public string PasswordHash { get; set; }
         public DateTime CreatedAt { get; set; }
         public bool Active { get; set; }
-        public int? WalletID { get; set; }
+        public int? WalletId { get; set; }
         public Wallet? Wallet { get; set; }
         public List<Transaction> Transactions { get; set; }
 

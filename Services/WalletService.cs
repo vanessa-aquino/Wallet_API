@@ -139,5 +139,19 @@ namespace WalletAPI.Services
                 throw new WalletException($"Insufficient funds in wallet ID {walletId}. Available balance: {balance}, Required: {amount}");
             }
         }
+    
+        public async Task<WalletDto> GetWalletByIdAsync(int walletId)
+        {
+            var wallet = await _walletRepository.GetByIdAsync(walletId);
+            return new WalletDto
+            {
+                Id = wallet.Id,
+                UserId = wallet.UserId,
+                Active = wallet.Active,
+                Balance= wallet.Balance,
+                CreatedAt = wallet.CreatedAt,
+                UserName = wallet.User.FirstName + " " + wallet.User.LastName
+            };
+        }
     }
 }
