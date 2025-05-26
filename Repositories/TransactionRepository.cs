@@ -128,7 +128,7 @@ namespace WalletAPI.Repositories
 
         public async Task<bool> IsFirstWithdrawOfMonthAsync(int userId)
         {
-            var now = DateTime.UtcNow;
+            var now = DateTime.Now;
             var firstDayOfMonth = new DateTime(now.Year, now.Month, 1);
 
             var thereWasdraw = await _context.Transactions
@@ -154,61 +154,38 @@ namespace WalletAPI.Repositories
             }
         }
 
-        public async Task<IEnumerable<Transaction>> GetListTransactionsByStatusAsync(TransactionStatus status, int walletId)
-        {
-            try
-            {
-                return await _context.Transactions
-                    .Where(t => t.Status == status && t.WalletId == walletId)
-                    .ToListAsync();
-            }
-            catch (Exception ex)
-            {
-                throw new InvalidOperationException("An error occurred while fetching the transaction.", ex);
-            }
-        }
-
-        public async Task<IEnumerable<Transaction>> GetListTransactionsByTypeAsync(TransactionType type, int walletId)
-        {
-            try
-            {
-                return await _context.Transactions
-                    .Where(t => t.TransactionType == type && t.WalletId == walletId)
-                    .ToListAsync();
-            }
-            catch (Exception ex)
-            {
-                throw new InvalidOperationException("An error occurred while fetching the transaction.", ex);
-            }
-        }
-
-        public async Task<IEnumerable<Transaction>> GetTransactionHistoryByDate(int walletId, DateTime? startDate, DateTime? endDate)
+        public async Task<IEnumerable<Transaction>> GetFilteredAsync(
+            int walletId,
+            DateTime? startDate = null,
+            DateTime? endDate = null,
+            TransactionStatus? status = null,
+            TransactionType? type = null
+        )
         {
             try
             {
                 var query = _context.Transactions
+                    .Include(t => t.Wallet)
                     .Where(t => t.WalletId == walletId);
 
-                if (startDate.HasValue) query = query.Where(t => t.Date >= startDate.Value);
-                if (endDate.HasValue) query = query.Where(t => t.Date <= endDate.Value);
+                if (startDate.HasValue)
+                    query = query.Where(t => t.Date >= startDate.Value);
 
-                return await query
-                    .OrderByDescending(t => t.Date)
-                    .ToListAsync();
+                if (endDate.HasValue)
+                    query = query.Where(t => t.Date <= endDate.Value);
+
+                if (status.HasValue)
+                    query = query.Where(t => t.Status == status.Value);
+
+                if (type.HasValue)
+                    query = query.Where(t => t.TransactionType == type.Value);
+
+                return await query.OrderByDescending(t => t.Date).ToListAsync();
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-
-                throw new InvalidOperationException("An error occurred while fetching the transaction history.", ex);
+                throw new InvalidOperationException("Error fetching filtered transactions.", ex);
             }
-        }
-    
-        public async Task<IEnumerable<Transaction>> GetByWalletIdAndDateRangeAsync(int walletId, DateTime minDate, DateTime maxDate)
-        {
-            return await _context.Transactions
-                .Where(t => t.WalletId == walletId && t.Date >= minDate && t.Date <= maxDate)
-                .OrderBy(t => t.Date)
-                .ToListAsync();
         }
     }
 

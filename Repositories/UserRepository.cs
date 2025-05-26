@@ -17,7 +17,6 @@ namespace WalletAPI.Repositories
          
         public async Task<User> AddAsync(User user)
         {
-            Console.WriteLine("Entrou no AddAsync");
             try
             {
                 _context.Users.Add(user);

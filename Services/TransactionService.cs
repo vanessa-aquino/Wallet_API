@@ -79,7 +79,7 @@ namespace WalletAPI.Services
                     await ValidateFundsAsync(transaction.WalletId, transaction.Amount);
                 }
 
-                transaction.Date = DateTime.UtcNow;
+                transaction.Date = DateTime.Now;
                 transaction.Status = DetermineInitialStatus(transaction.TransactionType);
 
                 await _transactionRepository.AddAsync(transaction);
@@ -104,7 +104,7 @@ namespace WalletAPI.Services
                 WalletId = dto.WalletId,
                 UserId = dto.UserId,
                 Description = dto.Description,
-                Date = DateTime.UtcNow
+                Date = DateTime.Now
             };
 
             var createdTransaction = await CreateTransactionAsync(transaction);
@@ -120,12 +120,12 @@ namespace WalletAPI.Services
         public async Task<FileContentResult> GenerateTransactionReportAsync(int walletId, DateTime? startDate = null, DateTime? endDate = null)
         {
             if (!startDate.HasValue) startDate = new DateTime(DateTime.Now.Year, 1, 1);
-            if (!endDate.HasValue) endDate = DateTime.UtcNow;
+            if (!endDate.HasValue) endDate = DateTime.Now;
 
             var wallet = await _walletRepository.GetByIdAsync(walletId);
             if (wallet == null) throw new WalletNotFoundException(walletId);
 
-            var transactions = await _transactionRepository.GetByWalletIdAndDateRangeAsync(walletId, startDate.Value, endDate.Value);
+            var transactions = await _transactionRepository.GetFilteredAsync(walletId, startDate, endDate);
 
             var separator = CultureInfo.CurrentCulture.TextInfo.ListSeparator;
             var lines = new List<string>
@@ -159,19 +159,18 @@ namespace WalletAPI.Services
             return await _transactionRepository.CountByWalletIdAsync(walletId);
         }
 
-        public async Task<IEnumerable<Transaction>> GetTransactionByStatusAsync(int walletId, TransactionStatus status)
+        public async Task<IEnumerable<Transaction>> GetTransactionHistoryAsync(TransactionFilterDto filterDto)
         {
-            return await _transactionRepository.GetListTransactionsByStatusAsync(status, walletId);
-        }
+            if (filterDto.WalletId <= 0)
+                throw new ArgumentException("WalletId is required.");
 
-        public async Task<IEnumerable<Transaction>> GetTransactionByTypeAsync(int walletId, TransactionType type)
-        {
-            return await _transactionRepository.GetListTransactionsByTypeAsync(type, walletId);
-        }
-
-        public async Task<IEnumerable<Transaction>> GetTransactionHistoryAsync(int walletId, DateTime? startDate, DateTime? endDate)
-        {
-            return await _transactionRepository.GetTransactionHistoryByDate(walletId, startDate, endDate);
+            return await _transactionRepository.GetFilteredAsync(
+                filterDto.WalletId,
+                filterDto.StartDate,
+                filterDto.EndDate,
+                filterDto.Status,
+                filterDto.TransactionType
+            );
         }
 
         public async Task RevertTransactionAsync(int transactionId)
@@ -200,7 +199,7 @@ namespace WalletAPI.Services
                     WalletId = transaction.WalletId,
                     UserId = transaction.UserId,
                     Description = $"Reversal of transaction {transactionId}.",
-                    Date = DateTime.UtcNow,
+                    Date = DateTime.Now,
                     Status = TransactionStatus.Completed
                 };
 
@@ -262,7 +261,7 @@ namespace WalletAPI.Services
                     WalletId = dto.SourceWalletId,
                     UserId = dto.UserId,
                     Description = dto.Description,
-                    Date = DateTime.UtcNow,
+                    Date = DateTime.Now,
                     Status = DetermineInitialStatus(TransactionType.Transfer)
                 };
 
@@ -367,7 +366,7 @@ namespace WalletAPI.Services
                 WalletId = dto.WalletId,
                 UserId = dto.UserId,
                 Description = dto.Description,
-                Date = DateTime.UtcNow
+                Date = DateTime.Now
             };
 
             var isFirstWithdraw = await _transactionRepository.IsFirstWithdrawOfMonthAsync(dto.UserId);

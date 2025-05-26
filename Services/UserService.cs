@@ -126,12 +126,9 @@ namespace WalletAPI.Services
 
         public async Task<UserDto> RegisterAsync(User user, string password)
         {
-            Console.WriteLine("Entrou no RegisterAsync");
             await ValidateEmailAsync(user.Email);
             user.SetPassword(password);
-            Console.WriteLine($"Hash gerado: {user.PasswordHash}");
             var createdUser = await _userRepository.AddAsync(user);
-            //await _walletService.CreateWalletAsync(createdUser);
 
             _logger.LogInformation($"New user registered with ID {createdUser.Id}");
             var token = GenerateToken(createdUser);

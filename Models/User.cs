@@ -8,8 +8,10 @@ namespace WalletAPI.Models
         public int Id { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
-        public DateTime BirthDate { get; set; }
+        public DateOnly BirthDate { get; set; }
         public string Email { get; set; }
+
+        [RegularExpression(@"\(?\d{2}\)?\s?\d{5}-\d{4}", ErrorMessage = "Formato de telefone inválido. Use 99 99999-9999.")]
         public string Phone { get; set; }
         public string PasswordHash { get; set; }
         public DateTime CreatedAt { get; set; }
@@ -20,11 +22,11 @@ namespace WalletAPI.Models
 
         public User()
         {
-            CreatedAt = DateTime.UtcNow;
+            CreatedAt = DateTime.Now;
             Active = true;
         }
 
-        public User(int id, string firstName, string lastName, DateTime birthDate, string email, string phone, string passwordHash)
+        public User(int id, string firstName, string lastName, DateOnly birthDate, string email, string phone, string passwordHash)
         {
             Id = id;
             FirstName = firstName;

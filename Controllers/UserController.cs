@@ -22,7 +22,6 @@ namespace WalletAPI.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto dto)
         {
-            Console.WriteLine("Entrou no Register");
             try
             {
                 var user = new User

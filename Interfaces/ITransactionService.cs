@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using WalletAPI.Models;
+﻿using WalletAPI.Models;
 using WalletAPI.Models.DTOs;
 using WalletAPI.Models.Enums;
 
@@ -15,12 +14,9 @@ namespace WalletAPI.Interfaces
         Task RevertTransactionAsync(int transactionId);
         
         // Consultas e relatorios
-        Task<IEnumerable<Transaction>> GetTransactionHistoryAsync(int walletId, DateTime? startDate, DateTime? endDate);
+        Task<IEnumerable<Transaction>> GetTransactionHistoryAsync(TransactionFilterDto filterDto);
         Task<int> GetTotalTransactionsAsync(int walletId);
         Task<double> GetBalanceAsync(int walletId);
-        Task<IEnumerable<Transaction>> GetTransactionByTypeAsync(int walletId, TransactionType type);
-        Task<IEnumerable<Transaction>> GetTransactionByStatusAsync(int walletId, TransactionStatus status);
-        Task<FileContentResult> GenerateTransactionReportAsync(int walletId, DateTime? startDate, DateTime? endDate);
 
         // validacao e utilidades
         Task ValidateTransactionAsync(Transaction transaction);
