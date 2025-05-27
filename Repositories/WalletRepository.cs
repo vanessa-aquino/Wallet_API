@@ -36,7 +36,8 @@ namespace WalletAPI.Repositories
                 var wallet = await _context.Wallets
                     .Include(w => w.User)
                     .Include(w => w.Transactions)
-                    .FirstOrDefaultAsync(w => w.Id == id);
+                    .Where(w => w.Id == id && !w.IsDeleted)
+                    .FirstOrDefaultAsync();
 
                 if (wallet == null)
                 {
@@ -59,7 +60,8 @@ namespace WalletAPI.Repositories
             return await _context.Wallets
                 .Include(w => w.User)
                 .Include(w => w.Transactions)
-                .FirstOrDefaultAsync(w => w.UserId == userId);
+                .Where(w => w.UserId == userId && !w.IsDeleted)
+                .FirstOrDefaultAsync();
         }
 
         public async Task<IEnumerable<Wallet>> GetAllAsync()
@@ -69,6 +71,7 @@ namespace WalletAPI.Repositories
                 return await _context.Wallets
                     .Include(w => w.User)
                     .Include(w => w.Transactions)
+                    .Where(w => !w.IsDeleted)
                     .ToListAsync();
             }
             catch (Exception ex)
@@ -82,7 +85,7 @@ namespace WalletAPI.Repositories
             try
             {
                 var existingWallet = await _context.Wallets
-                    .FirstOrDefaultAsync(w => w.Id == wallet.Id);
+                    .FirstOrDefaultAsync(w => w.Id == wallet.Id && !w.IsDeleted);
 
                 if (existingWallet == null)
                 {
@@ -112,12 +115,13 @@ namespace WalletAPI.Repositories
         {
             try
             {
-                var wallet = await _context.Wallets.FindAsync(id);
-                if (wallet == null)
-                {
+                var wallet = await _context.Wallets.FirstOrDefaultAsync(w => w.Id == id && !w.IsDeleted);
+                
+                if (wallet == null) 
                     throw new KeyNotFoundException($"Wallet with ID {id} not found.");
-                }
-                _context.Wallets.Remove(wallet);
+                
+                wallet.IsDeleted = true;
+                wallet.DeletedAt = DateTime.Now;
                 await _context.SaveChangesAsync();
                 return true;
             }

@@ -6,6 +6,8 @@
         public decimal Balance { get; set; }
         public DateTime CreatedAt { get; set; }
         public bool Active { get; set; }
+        public bool IsDeleted { get; set; }
+        public DateTime? DeletedAt { get; set; }
         public int UserId { get; set; }
         public User User { get; set; } = null!;
         public List<Transaction> Transactions { get; set; } = new List<Transaction>();
@@ -15,6 +17,7 @@
             CreatedAt = DateTime.Now;
             Active = true;
             Balance = 0.0m;
+            IsDeleted = false;
         }
 
         public Wallet(User user)
@@ -24,6 +27,7 @@
             CreatedAt = DateTime.Now;
             Active = true;
             Balance = 0.0m;
+            IsDeleted = false;
         }
 
         public bool IsActive() => Active;
