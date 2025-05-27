@@ -14,7 +14,7 @@ namespace WalletAPI.Repositories
         {
             _context = context;
         }
-         
+
         public async Task<User> AddAsync(User user)
         {
             try
@@ -86,16 +86,13 @@ namespace WalletAPI.Repositories
                     .FirstOrDefaultAsync(u => u.Id == user.Id);
 
                 if (existingUser == null)
-                {
                     throw new UserNotFoundException(user.Id);
-                }
+
 
                 if (string.IsNullOrWhiteSpace(user.FirstName) || string.IsNullOrWhiteSpace(user.Email))
-                {
                     throw new ArgumentException("User data is incomplete or invalid");
-                }
 
-                _context.Entry(user).State = EntityState.Modified;
+                existingUser.WalletId = user.WalletId;
                 await _context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException dbEx)
@@ -111,6 +108,7 @@ namespace WalletAPI.Repositories
                 throw new InvalidOperationException("An unexpected error occurred.", ex);
             }
         }
+
         public async Task<bool> DeleteAsync(int id)
         {
             try

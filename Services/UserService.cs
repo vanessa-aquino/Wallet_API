@@ -3,18 +3,16 @@ using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using WalletAPI.Models.DTOs;
-using WalletAPI.Exceptions;  
+using WalletAPI.Exceptions;
 using WalletAPI.Interfaces;
 using WalletAPI.Models;
 using System.Text;
-using WalletAPI.Data;
 
 namespace WalletAPI.Services
 {
     public class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
-        private readonly IWalletService _walletService;
         private readonly IConfiguration _configuration;
         private readonly IMemoryCache _cache;
         private readonly ILogger<UserService> _logger;
@@ -38,7 +36,7 @@ namespace WalletAPI.Services
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Name, user.Email),
-                new Claim(ClaimTypes.Role, "User")
+                new Claim(ClaimTypes.Role, user.Role)
             };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
@@ -83,8 +81,8 @@ namespace WalletAPI.Services
                 Id = user.Id,
                 FirstName = user.FirstName,
                 LastName = user.LastName,
+                Token = token,
                 Email = email,
-                Token = token
             };
         }
 
@@ -128,6 +126,8 @@ namespace WalletAPI.Services
         {
             await ValidateEmailAsync(user.Email);
             user.SetPassword(password);
+            user.Role = user.Email.Contains("admin@email.com") ? "Admin" : "User";
+
             var createdUser = await _userRepository.AddAsync(user);
 
             _logger.LogInformation($"New user registered with ID {createdUser.Id}");
@@ -139,7 +139,8 @@ namespace WalletAPI.Services
                 FirstName = createdUser.FirstName,
                 LastName = createdUser.LastName,
                 Email = createdUser.Email,
-                Token = token
+                Token = token,
+                Role = createdUser.Role
             };
         }
 
@@ -171,7 +172,7 @@ namespace WalletAPI.Services
                 AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(30),
                 SlidingExpiration = TimeSpan.FromMinutes(10)
             });
-       
+
             return new UserDto
             {
                 Id = userId,
@@ -235,5 +236,8 @@ namespace WalletAPI.Services
         {
             return DateTime.Now.AddDays(1);
         }
+    
+        public async Task UpdateAsync(User user) => await _userRepository.UpdateAsync(user);
+            
     }
 }

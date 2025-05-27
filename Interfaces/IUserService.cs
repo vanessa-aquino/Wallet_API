@@ -15,5 +15,6 @@ namespace WalletAPI.Interfaces
         Task DeactivateUserAsync(int userId);
         Task<TimeSpan> GetAccountAgeAsync(int userId);
         DateTime GetTokenExpiration();
+        Task UpdateAsync(User user);
     }
 }

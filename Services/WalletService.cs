@@ -9,6 +9,7 @@ namespace WalletAPI.Services
     public class WalletService : IWalletService
     {
         private readonly IWalletRepository _walletRepository;
+        private readonly IUserService _useService;
         private readonly IMemoryCache _cache;
         private readonly ILogger<WalletService> _logger;
         private const string WalletCacheKey = "Wallet_User_";
@@ -63,6 +64,9 @@ namespace WalletAPI.Services
 
             var wallet = new Wallet(user);
             await _walletRepository.AddAsync(wallet);
+
+            user.WalletId = wallet.Id;
+            await _useService.UpdateAsync(user);
 
             InvalidateCache(user.Id, wallet.Id);
             _logger.LogInformation($"New wallet created for user ID {user.Id}.");

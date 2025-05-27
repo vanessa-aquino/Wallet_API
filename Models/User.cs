@@ -16,6 +16,7 @@ namespace WalletAPI.Models
         public string PasswordHash { get; set; }
         public DateTime CreatedAt { get; set; }
         public bool Active { get; set; }
+        public string Role { get; set; }
         public int? WalletId { get; set; }
         public Wallet? Wallet { get; set; }
         public List<Transaction> Transactions { get; set; }
@@ -24,6 +25,7 @@ namespace WalletAPI.Models
         {
             CreatedAt = DateTime.Now;
             Active = true;
+            Role = "User";
         }
 
         public User(int id, string firstName, string lastName, DateOnly birthDate, string email, string phone, string passwordHash)
@@ -37,33 +39,15 @@ namespace WalletAPI.Models
             PasswordHash = passwordHash;
             CreatedAt = DateTime.Now;
             Active = true;
+            Role = "User";
         }
 
-        public void SetPassword(string password)
-        {
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword(password);
-        }
-
-        public bool VerifyPassword(string password)
-        {
-            return BCrypt.Net.BCrypt.Verify(password, PasswordHash);
-        }
-
-        public bool IsActive()
-        {
-            return Active;
-        }
-
-        public void Activate()
-        {
-            Active = true;
-        }
-
-        public void Deactivate()
-        {
-            Active = false;
-        }
-
+        public void SetPassword(string password) => PasswordHash = BCrypt.Net.BCrypt.HashPassword(password);
+        public bool VerifyPassword(string password) => BCrypt.Net.BCrypt.Verify(password, PasswordHash);
+        public bool IsActive() => Active;
+        public void Activate() => Active = true;
+        public void Deactivate() => Active = false;
+        public TimeSpan GetAccountAge() => DateTime.Now.Subtract(CreatedAt);
         public void UpdateProfile(string firstName, string lastName, string email, string phone)
         {
             FirstName = firstName;
@@ -72,10 +56,6 @@ namespace WalletAPI.Models
             Phone = phone;
         }
 
-        public TimeSpan GetAccountAge()
-        {
-            return DateTime.Now.Subtract(CreatedAt);
-        }
 
     }
 

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using WalletAPI.Exceptions;
 using WalletAPI.Interfaces;
 using WalletAPI.Models;
@@ -8,6 +9,7 @@ namespace WalletAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class WalletController : ControllerBase
     {
         private readonly IWalletService _walletService;
@@ -78,6 +80,7 @@ namespace WalletAPI.Controllers
         }
 
         [HttpGet("{walletId}/balance")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<decimal>> GetBalance(int walletId)
         {
             try
