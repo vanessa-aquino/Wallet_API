@@ -35,6 +35,7 @@ namespace WalletAPI.Repositories
             {
                 var wallet = await _context.Wallets
                     .Include(w => w.User)
+                    .Include(w => w.Transactions)
                     .FirstOrDefaultAsync(w => w.Id == id);
 
                 if (wallet == null)
@@ -57,6 +58,7 @@ namespace WalletAPI.Repositories
         {
             return await _context.Wallets
                 .Include(w => w.User)
+                .Include(w => w.Transactions)
                 .FirstOrDefaultAsync(w => w.UserId == userId);
         }
 
@@ -66,6 +68,7 @@ namespace WalletAPI.Repositories
             {
                 return await _context.Wallets
                     .Include(w => w.User)
+                    .Include(w => w.Transactions)
                     .ToListAsync();
             }
             catch (Exception ex)

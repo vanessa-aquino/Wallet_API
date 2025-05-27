@@ -86,6 +86,13 @@ namespace WalletAPI.Services
             {
                 _logger.LogInformation($"Fetching balance for wallet ID {walletId} from the database.");
                 var wallet = await _walletRepository.GetByIdAsync(walletId);
+
+                if( wallet == null )
+                {
+                    _logger.LogWarning($"Wallet with ID {walletId} not found.");
+                    throw new WalletNotFoundException(walletId);
+                }
+
                 balance = wallet.Balance;
 
                 var cacheOptions = new MemoryCacheEntryOptions()
@@ -99,11 +106,11 @@ namespace WalletAPI.Services
             return balance;
         }
 
-        public async Task<WalletDto> GetWalletByUserIdAsync(int userId)
+        public async Task<WalletDto?> GetWalletByUserIdAsync(int userId)
         {
             var cacheKey = $"{WalletCacheKey}{userId}";
 
-            if (!_cache.TryGetValue(cacheKey, out Wallet wallet))
+            if (!_cache.TryGetValue(cacheKey, out Wallet? wallet))
             {
                 _logger.LogInformation($"Fetching wallet for user ID {userId} from the database.");
                 wallet = await _walletRepository.GetWalletByUserIdAsync(userId);
@@ -117,6 +124,8 @@ namespace WalletAPI.Services
 
             }
 
+            if(wallet == null || wallet.User == null) return null;
+
             return new WalletDto
             {
                 Id = wallet.Id,
@@ -126,8 +135,6 @@ namespace WalletAPI.Services
                 CreatedAt = wallet.CreatedAt,
                 UserName = wallet.User.FirstName + " " + wallet.User.LastName
             };
-
-
         }
 
         public async Task ValidateSufficientFunds(int walletId, decimal amount)

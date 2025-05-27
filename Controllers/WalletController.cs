@@ -19,7 +19,7 @@ namespace WalletAPI.Controllers
             _userRepository = userRepository;
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("wallet/{id}")]
         public async Task<ActionResult<WalletDto>> GetWalletById(int id)
         {
             try
@@ -57,6 +57,78 @@ namespace WalletAPI.Controllers
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
 
+        }
+
+        [HttpGet("user/{userId}")]
+        public async Task<ActionResult<WalletDto>> FindWalletByUserId(int userId)
+        {
+            try
+            {
+                var wallet = await _walletService.GetWalletByUserIdAsync(userId);
+                return Ok(wallet);
+            }
+            catch(WalletNotFoundException)
+            {
+               return NotFound($"Wallet not found for user ID {userId}");
+            }
+            catch(Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        [HttpGet("{walletId}/balance")]
+        public async Task<ActionResult<decimal>> GetBalance(int walletId)
+        {
+            try
+            {
+                var balance = await _walletService.GetBalanceAsync(walletId);
+                return Ok(balance);
+            }
+            catch(WalletNotFoundException)
+            {
+                return NotFound($"Wallet with ID {walletId} not found");
+            }
+            catch(Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        [HttpPost("{walletId}/activate")]
+        public async Task<ActionResult> ActivateWallet(int walletId)
+        {
+            try
+            {
+                await _walletService.ActivateWalletAsync(walletId);
+                return NoContent();
+            }
+            catch(WalletNotFoundException)
+            {
+                return NotFound($"Wallet with ID {walletId} not found.");
+            }
+            catch(Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        [HttpPost("{walletId}/deactivate")]
+        public async Task<ActionResult> DeactivateWallet(int walletId)
+        {
+            try
+            {
+                await _walletService.DeactivateWalletAsync(walletId);
+                return NoContent();
+            }
+            catch(WalletNotFoundException)
+            {
+                return NotFound($"Wallet with ID {walletId} not found.");
+            }
+            catch(Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
         }
     }
 }

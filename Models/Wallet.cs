@@ -7,13 +7,14 @@
         public DateTime CreatedAt { get; set; }
         public bool Active { get; set; }
         public int UserId { get; set; }
-        public User User { get; set; }
-        public List<Transaction> Transactions { get; set; }
+        public User User { get; set; } = null!;
+        public List<Transaction> Transactions { get; set; } = new List<Transaction>();
 
         public Wallet()
         {
             CreatedAt = DateTime.Now;
             Active = true;
+            Balance = 0.0m;
         }
 
         public Wallet(User user)
@@ -25,21 +26,9 @@
             Balance = 0.0m;
         }
 
-        public bool IsActive()
-        {
-            return Active;
-        }
-
-        public void Activate()
-        {
-            Active = true;
-        }
-
-        public void Deactivate()
-        {
-            Active = false;
-        }
-
+        public bool IsActive() => Active;
+        public void Activate() => Active = true;
+        public void Deactivate() => Active = false;
     }
 
 
