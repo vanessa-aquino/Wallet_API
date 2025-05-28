@@ -14,5 +14,6 @@ namespace WalletAPI.Interfaces
         Task<WalletDto?> GetWalletByUserIdAsync(int userId);
         Task<WalletDto> GetWalletByIdAsync(int walletId);
         Task<bool> HasAccessAsync(int walletId, int userId, ClaimsPrincipal userClaims);
+        bool HasAccessToUser(int targetUserId, int loggedUserId, ClaimsPrincipal userClaims);
     }
 }

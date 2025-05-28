@@ -47,6 +47,14 @@ namespace WalletAPI.Services
             return isOwner || isAdmin;
         }
 
+        public bool HasAccessToUser(int targetUserId, int loggedUserId, ClaimsPrincipal userClaims)
+        {
+            var isOwner = targetUserId == loggedUserId;
+            var isAdmin = userClaims.IsInRole("Admin");
+
+            return isOwner || isAdmin;
+        }
+
         public async Task<WalletDto> ActivateWalletAsync(int walletId)
         {
             var wallet = await _walletRepository.GetByIdAsync(walletId)

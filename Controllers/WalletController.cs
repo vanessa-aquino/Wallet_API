@@ -50,13 +50,15 @@ namespace WalletAPI.Controllers
             }
         }
 
-
-
         [HttpPost("create")]
         public async Task<IActionResult> CreateWallet([FromBody] CreateWalletRequestDto request)
         {
             try
             {
+                if(!TryGetLoggedUserId(out var loggedUserId)) return Forbid("Invalid user identity.");
+                if (!_walletService.HasAccessToUser(request.UserId, loggedUserId, User))
+                    return Forbid("You do not have permission to create a wallet for this user.");
+
                 var user = await _userRepository.GetByIdAsync(request.UserId);
                 if (user == null) return NotFound("User not found.");
 
@@ -83,6 +85,10 @@ namespace WalletAPI.Controllers
         {
             try
             {
+                if (!TryGetLoggedUserId(out var loggedUserId)) return Forbid("Invalid user identity.");
+                if (!_walletService.HasAccessToUser(userId, loggedUserId, User))
+                    return Forbid("You do not have permission to create a wallet for this user.");
+
                 var wallet = await _walletService.GetWalletByUserIdAsync(userId);
                 return Ok(wallet);
             }
@@ -124,6 +130,10 @@ namespace WalletAPI.Controllers
         {
             try
             {
+                if (!TryGetLoggedUserId(out var userId)) return Forbid("Invalid user identity.");
+                var hasAccess = await _walletService.HasAccessAsync(walletId, userId, User);
+                if (!hasAccess) return Forbid("You do not have access to this wallet.");
+
                 var walletDto = await _walletService.ActivateWalletAsync(walletId);
                 return Ok(walletDto);
             }
@@ -142,6 +152,10 @@ namespace WalletAPI.Controllers
         {
             try
             {
+                if (!TryGetLoggedUserId(out var userId)) return Forbid("Invalid user identity.");
+                var hasAccess = await _walletService.HasAccessAsync(walletId, userId, User);
+                if (!hasAccess) return Forbid("You do not have access to this wallet.");
+
                 var walletDto = await _walletService.DeactivateWalletAsync(walletId);
                 return Ok(walletDto);
             }
