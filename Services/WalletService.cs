@@ -9,15 +9,16 @@ namespace WalletAPI.Services
     public class WalletService : IWalletService
     {
         private readonly IWalletRepository _walletRepository;
-        private readonly IUserService _useService;
+        private readonly IUserService _userService;
         private readonly IMemoryCache _cache;
         private readonly ILogger<WalletService> _logger;
         private const string WalletCacheKey = "Wallet_User_";
         private const string BalanceCacheKey = "Wallet_Balance_";
 
-        public WalletService(IWalletRepository walletRepository, IMemoryCache cache, ILogger<WalletService> logger)
+        public WalletService(IWalletRepository walletRepository, IUserService userService, IMemoryCache cache, ILogger<WalletService> logger)
         {
             _walletRepository = walletRepository;
+            _userService = userService;
             _cache = cache;
             _logger = logger;
         }
@@ -33,24 +34,51 @@ namespace WalletAPI.Services
             _logger.LogInformation($"Cache invalited for user ID {userId} and wallet ID {walletId}");
         }
         
-        public async Task ActivateWalletAsync(int walletId)
+        public async Task<WalletDto> ActivateWalletAsync(int walletId)
         {
-            var wallet = await _walletRepository.GetByIdAsync(walletId);
+            var wallet = await _walletRepository.GetByIdAsync(walletId)
+                        ?? throw new WalletNotFoundException(walletId);
+            
             wallet.Activate();
             await _walletRepository.UpdateAsync(wallet);
 
             InvalidateCache(wallet.UserId, walletId);
             _logger.LogInformation($"Wallet with ID {walletId} activated.");
+
+            return new WalletDto
+            {
+                Id = walletId,
+                UserId = wallet.UserId,
+                Balance = wallet.Balance,
+                Active = wallet.Active,
+                CreatedAt = wallet.CreatedAt,
+                UserName = $"{wallet.User?.FirstName} {wallet.User?.LastName}"
+            };
         }
 
-        public async Task DeactivateWalletAsync(int walletId)
+        public async Task<WalletDto> DeactivateWalletAsync(int walletId)
         {
-            var wallet = await _walletRepository.GetByIdAsync(walletId);
+            var wallet = await _walletRepository.GetByIdAsync(walletId)
+                         ?? throw new WalletNotFoundException(walletId);
+
+            if (wallet.Balance > 0)
+                throw new InvalidOperationException("The wallet cannot be deactivate while there is a balance.");
+
             wallet.Deactivate();
             await _walletRepository.UpdateAsync(wallet);
 
             InvalidateCache(wallet.UserId, walletId);
             _logger.LogInformation($"Wallet with ID {walletId} deactivated.");
+
+            return new WalletDto
+            {
+                Id = walletId,
+                UserId = wallet.UserId,
+                Balance = wallet.Balance,
+                Active = wallet.Active,
+                CreatedAt = wallet.CreatedAt,
+                UserName = $"{wallet.User?.FirstName} {wallet.User?.LastName}"
+            };
         }
 
         public async Task<WalletDto> CreateWalletAsync(User user)
@@ -66,7 +94,7 @@ namespace WalletAPI.Services
             await _walletRepository.AddAsync(wallet);
 
             user.WalletId = wallet.Id;
-            await _useService.UpdateAsync(user);
+            await _userService.UpdateAsync(user);
 
             InvalidateCache(user.Id, wallet.Id);
             _logger.LogInformation($"New wallet created for user ID {user.Id}.");

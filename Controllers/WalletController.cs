@@ -80,7 +80,6 @@ namespace WalletAPI.Controllers
         }
 
         [HttpGet("{walletId}/balance")]
-        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<decimal>> GetBalance(int walletId)
         {
             try
@@ -99,12 +98,12 @@ namespace WalletAPI.Controllers
         }
 
         [HttpPost("{walletId}/activate")]
-        public async Task<ActionResult> ActivateWallet(int walletId)
+        public async Task<ActionResult<WalletDto>> ActivateWallet(int walletId)
         {
             try
             {
-                await _walletService.ActivateWalletAsync(walletId);
-                return NoContent();
+                var walletDto = await _walletService.ActivateWalletAsync(walletId);
+                return Ok(walletDto);
             }
             catch(WalletNotFoundException)
             {
@@ -117,12 +116,12 @@ namespace WalletAPI.Controllers
         }
 
         [HttpPost("{walletId}/deactivate")]
-        public async Task<ActionResult> DeactivateWallet(int walletId)
+        public async Task<ActionResult<WalletDto>> DeactivateWallet(int walletId)
         {
             try
             {
-                await _walletService.DeactivateWalletAsync(walletId);
-                return NoContent();
+                var walletDto = await _walletService.DeactivateWalletAsync(walletId);
+                return Ok(walletDto);
             }
             catch(WalletNotFoundException)
             {

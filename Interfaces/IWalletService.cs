@@ -6,8 +6,8 @@ namespace WalletAPI.Interfaces
     public interface IWalletService
     {
         Task<WalletDto> CreateWalletAsync(User user);
-        Task ActivateWalletAsync(int walletId);
-        Task DeactivateWalletAsync(int walletId);
+        Task<WalletDto> ActivateWalletAsync(int walletId);
+        Task<WalletDto> DeactivateWalletAsync(int walletId);
         Task<decimal> GetBalanceAsync(int walletId);
         Task ValidateSufficientFunds(int walletId, decimal amount);
         Task<WalletDto?> GetWalletByUserIdAsync(int userId);
