@@ -163,11 +163,6 @@ namespace WalletAPI.Services
             };
         }
 
-        public async Task<decimal> GetBalanceAsync(int walletId)
-        {
-            return await _walletService.GetBalanceAsync(walletId);
-        }
-
         public async Task<TransactionResponseDto> GetByIdAsync(int id)
         {
             var transaction = await _transactionRepository.GetByIdAsync(id);

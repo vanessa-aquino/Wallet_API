@@ -3,6 +3,7 @@ using WalletAPI.Models.DTOs;
 using WalletAPI.Interfaces;
 using WalletAPI.Exceptions;
 using WalletAPI.Models;
+using System.Security.Claims;
 
 namespace WalletAPI.Services
 {
@@ -34,6 +35,18 @@ namespace WalletAPI.Services
             _logger.LogInformation($"Cache invalited for user ID {userId} and wallet ID {walletId}");
         }
         
+        public async Task<bool> HasAccessAsync(int walletId, int userId, ClaimsPrincipal userClaims)
+        {
+            var wallet = await _walletRepository.GetByIdAsync(walletId);
+            if (wallet == null)
+                throw new WalletNotFoundException(walletId);
+
+            var isOwner = wallet.UserId == userId;
+            var isAdmin = userClaims.IsInRole("Admin");
+
+            return isOwner || isAdmin;
+        }
+
         public async Task<WalletDto> ActivateWalletAsync(int walletId)
         {
             var wallet = await _walletRepository.GetByIdAsync(walletId)
@@ -110,7 +123,7 @@ namespace WalletAPI.Services
             };
         }
 
-        public async Task<decimal> GetBalanceAsync(int walletId)
+        public async Task<decimal> GetBalanceAsync(int walletId, int currentUserId)
         {
             var cacheKey = $"{WalletCacheKey}Balance_{walletId}";
 
@@ -123,6 +136,12 @@ namespace WalletAPI.Services
                 {
                     _logger.LogWarning($"Wallet with ID {walletId} not found.");
                     throw new WalletNotFoundException(walletId);
+                }
+
+                if(wallet.UserId != currentUserId)
+                {
+                    _logger.LogWarning($"User {currentUserId} attempted to access wallet {walletId} wich does not belong to them.");
+                    throw new UnauthorizedAccessException("You do not have permission to view the balance of this wallet.");
                 }
 
                 balance = wallet.Balance;
@@ -169,9 +188,9 @@ namespace WalletAPI.Services
             };
         }
 
-        public async Task ValidateSufficientFunds(int walletId, decimal amount)
+        public async Task ValidateSufficientFunds(int walletId, int currentUserId ,decimal amount)
         {
-            var balance = await GetBalanceAsync(walletId);
+            var balance = await GetBalanceAsync(walletId, currentUserId);
             if(balance < amount)
             {
                 _logger.LogWarning($"Insufficient funds in wallet ID {walletId}. Available balance: {balance}, Required: {amount}");
@@ -182,6 +201,9 @@ namespace WalletAPI.Services
         public async Task<WalletDto> GetWalletByIdAsync(int walletId)
         {
             var wallet = await _walletRepository.GetByIdAsync(walletId);
+            if (wallet == null)
+                throw new WalletNotFoundException(walletId);
+
             return new WalletDto
             {
                 Id = wallet.Id,

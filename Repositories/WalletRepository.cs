@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using WalletAPI.Data;
+using WalletAPI.Exceptions;
 using WalletAPI.Interfaces;
 using WalletAPI.Models;
 
@@ -31,28 +32,16 @@ namespace WalletAPI.Repositories
 
         public async Task<Wallet> GetByIdAsync(int id)
         {
-            try
-            {
-                var wallet = await _context.Wallets
-                    .Include(w => w.User)
-                    .Include(w => w.Transactions)
-                    .Where(w => w.Id == id && !w.IsDeleted)
-                    .FirstOrDefaultAsync();
+            var wallet = await _context.Wallets
+                .Include(w => w.User)
+                .Include(w => w.Transactions)
+                .Where(w => w.Id == id && !w.IsDeleted)
+                .FirstOrDefaultAsync();
 
-                if (wallet == null)
-                {
-                    throw new KeyNotFoundException($"Wallet with ID {id} not found.");
-                }
-                return wallet;
-            }
-            catch (KeyNotFoundException knfEx)
-            {
-                throw new KeyNotFoundException("Wallet not found", knfEx);
-            }
-            catch (Exception ex)
-            {
-                throw new InvalidOperationException("An error occurred while fetching the wallet.", ex);
-            }
+            if (wallet == null)
+                throw new WalletNotFoundException(id);
+
+            return wallet;
         }
 
         public async Task<Wallet?> GetWalletByUserIdAsync(int userId)
@@ -116,10 +105,10 @@ namespace WalletAPI.Repositories
             try
             {
                 var wallet = await _context.Wallets.FirstOrDefaultAsync(w => w.Id == id && !w.IsDeleted);
-                
-                if (wallet == null) 
+
+                if (wallet == null)
                     throw new KeyNotFoundException($"Wallet with ID {id} not found.");
-                
+
                 wallet.IsDeleted = true;
                 wallet.DeletedAt = DateTime.Now;
                 await _context.SaveChangesAsync();
