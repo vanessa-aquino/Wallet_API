@@ -61,7 +61,8 @@ namespace WalletAPI.Services
             if (!_cache.TryGetValue(cacheKey, out User user))
             {
                 user = await _userRepository.GetByEmailAsync(email);
-                if (user == null || !user.VerifyPassword(password))
+
+                if (user == null)
                 {
                     _logger.LogWarning($"Failed login attempt for email : {email}");
                     throw new InvalidCredentialsException();
@@ -74,6 +75,12 @@ namespace WalletAPI.Services
                 _cache.Set(cacheKey, user, cacheOptions);
             }
 
+            if(!user.VerifyPassword(password))
+            {
+                _logger.LogWarning($"Failed login attempt for email : {email}");
+                throw new InvalidCredentialsException();
+            }
+
             var token = GenerateToken(user);
 
             return new UserDto
@@ -83,6 +90,7 @@ namespace WalletAPI.Services
                 LastName = user.LastName,
                 Token = token,
                 Email = email,
+                Role = user.Role
             };
         }
 
