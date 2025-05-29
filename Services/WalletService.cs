@@ -209,8 +209,7 @@ namespace WalletAPI.Services
         public async Task<WalletDto> GetWalletByIdAsync(int walletId)
         {
             var wallet = await _walletRepository.GetByIdAsync(walletId);
-            if (wallet == null)
-                throw new WalletNotFoundException(walletId);
+            if (wallet == null) throw new WalletNotFoundException(walletId);
 
             return new WalletDto
             {
@@ -221,6 +220,29 @@ namespace WalletAPI.Services
                 CreatedAt = wallet.CreatedAt,
                 UserName = wallet.User.FirstName + " " + wallet.User.LastName
             };
+        }
+    
+        public async Task<IEnumerable<AllWalletsDto>> GetAllWalletsAsync()
+        {
+            var listWallets = await _walletRepository.GetAllAsync();
+
+            return listWallets.Select(w => new AllWalletsDto
+            {
+                Id = w.Id,
+                Active = w.Active,
+               CreatedAt = w.CreatedAt,
+               UserId = w.UserId,
+               UserName = w.User?.FirstName + " " + w.User?.LastName
+            });
+         
+        }
+
+        public async Task DeleteWalletAsync(int walletId)
+        {
+            var wallet = await _walletRepository.GetByIdAsync(walletId);
+            await _walletRepository.DeleteAsync(walletId);
+            InvalidateCache(wallet.UserId, wallet.Id);
+            _logger.LogInformation($"Wallet with Id {walletId} deleted.");
         }
     }
 }

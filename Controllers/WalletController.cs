@@ -28,14 +28,31 @@ namespace WalletAPI.Controllers
             return !string.IsNullOrEmpty(useridStr) && int.TryParse(useridStr, out userId);
         }
 
+        private async Task<ActionResult?> ValidateWalletAccessAsync(int walletId)
+        {
+            if (!TryGetLoggedUserId(out var userId)) return Forbid("Invalid user identity");
+
+            var hasAccess = await _walletService.HasAccessAsync(walletId, userId, User);
+            if (!hasAccess) return Forbid("You do not have access to this wallet.");
+
+            return null;
+        }
+
+        private ActionResult? ValidateUserAccess(int targetUserId)
+        {
+            if (!TryGetLoggedUserId(out var loggedUserId)) return Forbid("Invalid user identity");
+            if (!_walletService.HasAccessToUser(targetUserId, loggedUserId, User)) return Forbid("You do not have permission to access this user.");
+
+            return null;
+        }
+ 
         [HttpGet("wallet/{id}")]
         public async Task<ActionResult<WalletDto>> GetWalletById(int id)
         {
             try
             {
-                if (!TryGetLoggedUserId(out var userId)) return Forbid("Invalid user identity.");
-                var hasAccess = await _walletService.HasAccessAsync(id, userId, User);
-                if (!hasAccess) return Forbid("You do not have access to this wallet.");
+                var accessValidation = await ValidateWalletAccessAsync(id);
+                if(accessValidation != null) return accessValidation;
 
                 var wallet = await _walletService.GetWalletByIdAsync(id);
                 return Ok(wallet);
@@ -55,9 +72,8 @@ namespace WalletAPI.Controllers
         {
             try
             {
-                if(!TryGetLoggedUserId(out var loggedUserId)) return Forbid("Invalid user identity.");
-                if (!_walletService.HasAccessToUser(request.UserId, loggedUserId, User))
-                    return Forbid("You do not have permission to create a wallet for this user.");
+                var accessValidation = ValidateUserAccess(request.UserId);
+                if (accessValidation != null) return accessValidation;
 
                 var user = await _userRepository.GetByIdAsync(request.UserId);
                 if (user == null) return NotFound("User not found.");
@@ -85,9 +101,8 @@ namespace WalletAPI.Controllers
         {
             try
             {
-                if (!TryGetLoggedUserId(out var loggedUserId)) return Forbid("Invalid user identity.");
-                if (!_walletService.HasAccessToUser(userId, loggedUserId, User))
-                    return Forbid("You do not have permission to create a wallet for this user.");
+                var accessValidation = ValidateUserAccess(userId);
+                if (accessValidation != null) return accessValidation;
 
                 var wallet = await _walletService.GetWalletByUserIdAsync(userId);
                 return Ok(wallet);
@@ -130,9 +145,8 @@ namespace WalletAPI.Controllers
         {
             try
             {
-                if (!TryGetLoggedUserId(out var userId)) return Forbid("Invalid user identity.");
-                var hasAccess = await _walletService.HasAccessAsync(walletId, userId, User);
-                if (!hasAccess) return Forbid("You do not have access to this wallet.");
+                var accessValidation = await ValidateWalletAccessAsync(walletId);
+                if (accessValidation != null) return accessValidation;
 
                 var walletDto = await _walletService.ActivateWalletAsync(walletId);
                 return Ok(walletDto);
@@ -152,9 +166,8 @@ namespace WalletAPI.Controllers
         {
             try
             {
-                if (!TryGetLoggedUserId(out var userId)) return Forbid("Invalid user identity.");
-                var hasAccess = await _walletService.HasAccessAsync(walletId, userId, User);
-                if (!hasAccess) return Forbid("You do not have access to this wallet.");
+                var accessValidation = await ValidateWalletAccessAsync(walletId);
+                if (accessValidation != null) return accessValidation;
 
                 var walletDto = await _walletService.DeactivateWalletAsync(walletId);
                 return Ok(walletDto);
@@ -164,6 +177,42 @@ namespace WalletAPI.Controllers
                 return NotFound($"Wallet with ID {walletId} not found.");
             }
             catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        [HttpDelete("{walletId}")]
+        public async Task<ActionResult> DeleteWallet(int walletId)
+        {
+            try
+            {
+                var accessValidation = await ValidateWalletAccessAsync(walletId);
+                if (accessValidation != null) return accessValidation;
+
+                await _walletService.DeleteWalletAsync(walletId);
+                return NoContent();
+            }
+            catch (WalletNotFoundException)
+            {
+                return NotFound($"Wallet with ID {walletId} not found.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        [HttpGet("admin")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<IEnumerable<AllWalletsDto>>> GetAllWalletsAsync()
+        {
+            try
+            {
+                var wallets = await _walletService.GetAllWalletsAsync();
+                return Ok(wallets);
+            }
+            catch(Exception ex)
             {
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
