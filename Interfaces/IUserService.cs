@@ -1,5 +1,5 @@
 ﻿using WalletAPI.Models;
-using WalletAPI.Models.DTOs;
+using WalletAPI.Models.DTOs.User;
 
 namespace WalletAPI.Interfaces
 {
@@ -7,8 +7,8 @@ namespace WalletAPI.Interfaces
     {
         string GenerateToken(User user);
         Task<UserDto> AuthenticateAsync(string email, string password);
-        Task<UserDto> UpdateProfileAsync(int userId, string firstName, string lastName, string email, string phone);
-        Task ChangePasswordAsync(int userId, string currentPassword, string newPassword);
+        Task<UserDto> UpdateProfileAsync(int userId, UpdateProfileDto dto);
+        Task ChangePasswordAsync(ChangePasswordDto dto);
         Task<UserDto> RegisterAsync(User user, string password);
         Task ValidateEmailAsync(string email);
         Task ActivateUserAsync(int userId);

@@ -48,12 +48,16 @@ namespace WalletAPI.Models
         public void Activate() => Active = true;
         public void Deactivate() => Active = false;
         public TimeSpan GetAccountAge() => DateTime.Now.Subtract(CreatedAt);
-        public void UpdateProfile(string firstName, string lastName, string email, string phone)
+        public void UpdateProfile(string? firstName, string? lastName, string? email, string? phone)
         {
-            FirstName = firstName;
-            LastName = lastName;
-            Email = email;
-            Phone = phone;
+            if(!string.IsNullOrWhiteSpace(firstName) && firstName != "string")
+                FirstName = firstName;
+            if(!string.IsNullOrWhiteSpace(lastName) && lastName != "string")
+                LastName = lastName;
+            if(!string.IsNullOrWhiteSpace(email) && email != "string")
+                Email = email;
+            if(!string.IsNullOrWhiteSpace(phone) && phone != "string")
+                Phone = phone;
         }
 
 

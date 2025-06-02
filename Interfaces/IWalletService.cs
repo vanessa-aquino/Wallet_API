@@ -1,6 +1,6 @@
 ﻿using System.Security.Claims;
 using WalletAPI.Models;
-using WalletAPI.Models.DTOs;
+using WalletAPI.Models.DTOs.Wallet;
 
 namespace WalletAPI.Interfaces
 {

@@ -9,6 +9,7 @@ using WalletAPI.Data;
 using System.Globalization;
 using System.Text;
 using Microsoft.AspNetCore.Mvc;
+using WalletAPI.Models.DTOs.Transaction;
 
 namespace WalletAPI.Services
 {

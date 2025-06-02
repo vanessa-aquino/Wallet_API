@@ -1,4 +1,4 @@
-﻿namespace WalletAPI.Models.DTOs
+﻿namespace WalletAPI.Models.DTOs.User
 {
     public class RegisterDto
     {

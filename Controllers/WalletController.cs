@@ -1,58 +1,34 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
+using WalletAPI.Controllers.Base;
 using WalletAPI.Exceptions;
 using WalletAPI.Interfaces;
 using WalletAPI.Models.DTOs;
+using WalletAPI.Models.DTOs.Wallet;
 
 namespace WalletAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
-    public class WalletController : ControllerBase
+    public class WalletController : BaseController
     {
-        private readonly IWalletService _walletService;
         private readonly IUserRepository _userRepository;
 
         public WalletController(IWalletService walletService, IUserRepository userRepository)
+            : base(walletService)
         {
-            _walletService = walletService;
             _userRepository = userRepository;
         }
 
-        private bool TryGetLoggedUserId(out int userId)
-        {
-            userId = 0;
-            var useridStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            return !string.IsNullOrEmpty(useridStr) && int.TryParse(useridStr, out userId);
-        }
 
-        private async Task<ActionResult?> ValidateWalletAccessAsync(int walletId)
-        {
-            if (!TryGetLoggedUserId(out var userId)) return Forbid("Invalid user identity");
-
-            var hasAccess = await _walletService.HasAccessAsync(walletId, userId, User);
-            if (!hasAccess) return Forbid("You do not have access to this wallet.");
-
-            return null;
-        }
-
-        private ActionResult? ValidateUserAccess(int targetUserId)
-        {
-            if (!TryGetLoggedUserId(out var loggedUserId)) return Forbid("Invalid user identity");
-            if (!_walletService.HasAccessToUser(targetUserId, loggedUserId, User)) return Forbid("You do not have permission to access this user.");
-
-            return null;
-        }
- 
         [HttpGet("wallet/{id}")]
         public async Task<ActionResult<WalletDto>> GetWalletById(int id)
         {
             try
             {
                 var accessValidation = await ValidateWalletAccessAsync(id);
-                if(accessValidation != null) return accessValidation;
+                if (accessValidation != null) return accessValidation;
 
                 var wallet = await _walletService.GetWalletByIdAsync(id);
                 return Ok(wallet);
@@ -63,7 +39,8 @@ namespace WalletAPI.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                return StatusCode(500, new { message = $"Internal server error" });
+
             }
         }
 
@@ -91,7 +68,8 @@ namespace WalletAPI.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                return StatusCode(500, new { message = $"Internal server error" });
+
             }
 
         }
@@ -113,7 +91,8 @@ namespace WalletAPI.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                return StatusCode(500, new { message = $"Internal server error" });
+
             }
         }
 
@@ -136,7 +115,8 @@ namespace WalletAPI.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                return StatusCode(500, new { message = $"Internal server error" });
+
             }
         }
 
@@ -157,7 +137,8 @@ namespace WalletAPI.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                return StatusCode(500, new { message = $"Internal server error" });
+
             }
         }
 
@@ -178,7 +159,8 @@ namespace WalletAPI.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                return StatusCode(500, new { message = $"Internal server error" });
+
             }
         }
 
@@ -199,7 +181,8 @@ namespace WalletAPI.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                return StatusCode(500, new { message = $"Internal server error" });
+
             }
         }
 
@@ -212,9 +195,10 @@ namespace WalletAPI.Controllers
                 var wallets = await _walletService.GetAllWalletsAsync();
                 return Ok(wallets);
             }
-            catch(Exception ex)
+            catch (Exception)
             {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                return StatusCode(500, new { message = $"Internal server error" });
+
             }
         }
     }

@@ -1,9 +1,9 @@
 ﻿using Microsoft.Extensions.Caching.Memory;
-using WalletAPI.Models.DTOs;
 using WalletAPI.Interfaces;
 using WalletAPI.Exceptions;
 using WalletAPI.Models;
 using System.Security.Claims;
+using WalletAPI.Models.DTOs.Wallet;
 
 namespace WalletAPI.Services
 {

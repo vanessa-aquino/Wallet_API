@@ -1,5 +1,6 @@
 ﻿using WalletAPI.Models;
 using WalletAPI.Models.DTOs;
+using WalletAPI.Models.DTOs.Transaction;
 using WalletAPI.Models.Enums;
 
 namespace WalletAPI.Interfaces

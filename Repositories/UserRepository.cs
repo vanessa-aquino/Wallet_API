@@ -88,11 +88,10 @@ namespace WalletAPI.Repositories
                 if (existingUser == null)
                     throw new UserNotFoundException(user.Id);
 
-
                 if (string.IsNullOrWhiteSpace(user.FirstName) || string.IsNullOrWhiteSpace(user.Email))
                     throw new ArgumentException("User data is incomplete or invalid");
 
-                existingUser.WalletId = user.WalletId;
+               _context.Users.Update(user);
                 await _context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException dbEx)

@@ -2,11 +2,11 @@
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
-using WalletAPI.Models.DTOs;
 using WalletAPI.Exceptions;
 using WalletAPI.Interfaces;
 using WalletAPI.Models;
 using System.Text;
+using WalletAPI.Models.DTOs.User;
 
 namespace WalletAPI.Services
 {
@@ -75,7 +75,7 @@ namespace WalletAPI.Services
                 _cache.Set(cacheKey, user, cacheOptions);
             }
 
-            if(!user.VerifyPassword(password))
+            if (!user.VerifyPassword(password))
             {
                 _logger.LogWarning($"Failed login attempt for email : {email}");
                 throw new InvalidCredentialsException();
@@ -94,25 +94,25 @@ namespace WalletAPI.Services
             };
         }
 
-        public async Task ChangePasswordAsync(int userId, string currentPassword, string newPassword)
+        public async Task ChangePasswordAsync(ChangePasswordDto dto)
         {
-            var user = await _userRepository.GetByIdAsync(userId);
+            var user = await _userRepository.GetByIdAsync(dto.UserId);
 
             if (user == null)
             {
-                _logger.LogWarning($"Attempted password change for non-existent user ID {userId}");
-                throw new UserNotFoundException(userId);
+                _logger.LogWarning($"Attempted password change for non-existent user ID {dto.UserId}");
+                throw new UserNotFoundException(dto.UserId);
             }
 
-            if (!user.VerifyPassword(currentPassword))
+            if (!user.VerifyPassword(dto.CurrentPassword))
             {
-                _logger.LogWarning($"Incorrect current password for user ID {userId}");
+                _logger.LogWarning($"Incorrect current password for user ID {dto.UserId}");
                 throw new InvalidCredentialsException();
             }
 
-            user.SetPassword(newPassword);
+            user.SetPassword(dto.NewPassword);
             await _userRepository.UpdateAsync(user);
-            _logger.LogInformation($"Password changed successfully for user ID {userId}");
+            _logger.LogInformation($"Password changed successfully for user ID {dto.UserId}");
         }
 
         public async Task ValidateEmailAsync(string email)
@@ -147,34 +147,31 @@ namespace WalletAPI.Services
                 FirstName = createdUser.FirstName,
                 LastName = createdUser.LastName,
                 Email = createdUser.Email,
+                Phone = createdUser.Phone,
                 Token = token,
                 Role = createdUser.Role
             };
         }
 
-        public async Task<UserDto> UpdateProfileAsync(int userId, string firstName, string lastName, string email, string phone)
+        public async Task<UserDto> UpdateProfileAsync(int userId, UpdateProfileDto dto)
         {
             var user = await _userRepository.GetByIdAsync(userId);
+            if (user == null) throw new KeyNotFoundException($"User with ID {userId} not found.");
 
-            if (user == null)
+            if (!string.IsNullOrWhiteSpace(dto.Email))
             {
-                throw new KeyNotFoundException($"User with ID {userId} not found.");
+                var existingUser = await _userRepository.GetByEmailAsync(dto.Email);
+                if (existingUser != null && existingUser.Id != userId)
+                    throw new EmailAlreadyInUseException(dto.Email);
             }
 
-            var existingUser = await _userRepository.GetByEmailAsync(email);
-            if (existingUser != null && existingUser.Id != userId)
-            {
-                throw new EmailAlreadyInUseException(email);
-            }
-
-            user.UpdateProfile(firstName, lastName, email, phone);
+            user.UpdateProfile(dto.FirstName, dto.LastName, dto.Email, dto.Phone);
             await _userRepository.UpdateAsync(user);
 
             _logger.LogInformation($"User profile updated for user ID {userId}");
 
             var cacheKey = $"{UserCacheKey}{user.Email}";
             _cache.Remove(cacheKey);
-
             _cache.Set(cacheKey, user, new MemoryCacheEntryOptions
             {
                 AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(30),
@@ -184,12 +181,13 @@ namespace WalletAPI.Services
             return new UserDto
             {
                 Id = userId,
-                FirstName = firstName,
-                LastName = lastName,
-                Email = email,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                Email = user.Email,
+                Phone = user.Phone,
+                Role = user.Role,
                 Token = GenerateToken(user)
             };
-
         }
 
         public async Task ActivateUserAsync(int userId)
@@ -244,8 +242,8 @@ namespace WalletAPI.Services
         {
             return DateTime.Now.AddDays(1);
         }
-    
+
         public async Task UpdateAsync(User user) => await _userRepository.UpdateAsync(user);
-            
+
     }
 }
