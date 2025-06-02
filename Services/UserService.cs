@@ -235,7 +235,6 @@ namespace WalletAPI.Services
             }
 
             return accountAge;
-
         }
 
         public DateTime GetTokenExpiration()

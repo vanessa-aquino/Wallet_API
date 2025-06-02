@@ -119,5 +119,65 @@ namespace WalletAPI.Controllers
 
             }
         }
+
+        [HttpPut("{userId}/activate")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult> ActivatedUser(int userId)
+        {
+            try
+            {
+                await _userService.ActivateUserAsync(userId);
+                return NoContent();
+            }
+            catch (UserNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { message = "Internal server error" });
+            }
+        }
+
+        [HttpPut("{userId}/deactive")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult> DeactivatedUser(int userId)
+        {
+            try
+            {
+                await _userService.DeactivateUserAsync(userId);
+                return NoContent();
+            }
+            catch (UserNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { message = "Internal server error" });
+            }
+        }
+
+        [HttpGet("accountAge")]
+        public async Task<ActionResult<TimeSpan>> GetAccountAge(int userId)
+        {
+            try
+            {
+                var accessValidation = ValidateUserAccess(userId);
+                if (accessValidation != null) return accessValidation;
+
+                var accountAge = await _userService.GetAccountAgeAsync(userId);
+                return Ok(accountAge.Days);
+            }
+            catch (UserNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { message = "Internal server error" });
+            }
+        }
+
     }
 }

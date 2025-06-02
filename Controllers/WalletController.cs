@@ -113,7 +113,7 @@ namespace WalletAPI.Controllers
             {
                 return NotFound($"Wallet with ID {walletId} not found");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return StatusCode(500, new { message = $"Internal server error" });
 
@@ -135,7 +135,7 @@ namespace WalletAPI.Controllers
             {
                 return NotFound($"Wallet with ID {walletId} not found.");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return StatusCode(500, new { message = $"Internal server error" });
 
@@ -157,7 +157,7 @@ namespace WalletAPI.Controllers
             {
                 return NotFound($"Wallet with ID {walletId} not found.");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return StatusCode(500, new { message = $"Internal server error" });
 
@@ -179,7 +179,7 @@ namespace WalletAPI.Controllers
             {
                 return NotFound($"Wallet with ID {walletId} not found.");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return StatusCode(500, new { message = $"Internal server error" });
 
