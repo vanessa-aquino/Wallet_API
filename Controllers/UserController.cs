@@ -1,13 +1,11 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.Mvc;
 using System.Security.Authentication;
-using System.Security.Claims;
-using WalletAPI.Controllers.Base;
-using WalletAPI.Exceptions;
-using WalletAPI.Interfaces;
-using WalletAPI.Models;
 using WalletAPI.Models.DTOs.User;
+using WalletAPI.Controllers.Base;
+using Microsoft.AspNetCore.Mvc;
+using WalletAPI.Exceptions;
+using WalletAPI.Models;
+using WalletAPI.Interfaces.Services;
 
 namespace WalletAPI.Controllers
 {
@@ -17,19 +15,16 @@ namespace WalletAPI.Controllers
     public class UserController : BaseController
     {
         private readonly IUserService _userService;
+        private readonly IUserContextService _userContextService;
 
-        public UserController(IUserService userService, IWalletService walletService)
+        public UserController(IUserService userService, IUserContextService userContextService ,IWalletService walletService)
             : base(walletService)
         {
             _userService = userService;
+            _userContextService = userContextService;
         }
 
-        private int GetUserIdFromToken()
-        {
-            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
-            return int.Parse(userIdClaim?.Value ?? throw new UnauthorizedAccessException());
-        }
-
+      
         [AllowAnonymous]
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto dto)
@@ -66,22 +61,32 @@ namespace WalletAPI.Controllers
             }
             catch (InvalidCredentialException)
             {
-                return Unauthorized("invalid credentials.");
+                return Unauthorized("Invalid credentials.");
             }
         }
 
         [HttpPut("changePassword")]
-        public async Task<IActionResult> ChangePasswordAsync([FromBody] ChangePasswordDto dto)
+        public async Task<IActionResult> ChangePasswordAsync(int userId, [FromBody] ChangePasswordDto dto)
         {
             try
             {
-                var accesValidation = ValidateUserAccess(dto.UserId);
+                userId = _userContextService.GetUserId();
+
+                var accesValidation = ValidateUserAccess(userId);
                 if (accesValidation != null) return accesValidation;
 
-                await _userService.ChangePasswordAsync(dto);
+                await _userService.ChangePasswordAsync(userId, dto);
                 return NoContent();
             }
-            catch (Exception ex)
+            catch(UserNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message});
+            }
+            catch(InvalidUserCredentialsException)
+            {
+                return Unauthorized("Invalid credentials");
+            }
+            catch (Exception)
             {
                 return StatusCode(500, new { message = $"Internal server error" });
 
@@ -93,7 +98,7 @@ namespace WalletAPI.Controllers
         {
             try
             {
-                var userId = GetUserIdFromToken();
+                var userId = _userContextService.GetUserId();
 
                 var accessValidation = ValidateUserAccess(userId);
                 if (accessValidation != null) return accessValidation;

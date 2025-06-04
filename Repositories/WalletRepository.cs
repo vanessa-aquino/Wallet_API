@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using WalletAPI.Data;
 using WalletAPI.Exceptions;
-using WalletAPI.Interfaces;
+using WalletAPI.Interfaces.Repositories;
 using WalletAPI.Models;
 
 namespace WalletAPI.Repositories

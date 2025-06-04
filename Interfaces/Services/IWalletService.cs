@@ -2,7 +2,7 @@
 using WalletAPI.Models;
 using WalletAPI.Models.DTOs.Wallet;
 
-namespace WalletAPI.Interfaces
+namespace WalletAPI.Interfaces.Services
 {
     public interface IWalletService
     {

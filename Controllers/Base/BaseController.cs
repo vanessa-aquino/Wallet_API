@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-using WalletAPI.Interfaces;
+using WalletAPI.Interfaces.Services;
 
 namespace WalletAPI.Controllers.Base
 {

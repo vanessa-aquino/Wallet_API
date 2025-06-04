@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using WalletAPI.Models.DTOs;
-using WalletAPI.Interfaces;
 using WalletAPI.Models;
 using WalletAPI.Models.DTOs.Transaction;
+using WalletAPI.Interfaces.Services;
 
 namespace WalletAPI.Controllers
 {

@@ -1,14 +1,14 @@
 ﻿using WalletAPI.Models;
 using WalletAPI.Models.DTOs.User;
 
-namespace WalletAPI.Interfaces
+namespace WalletAPI.Interfaces.Services
 {
     public interface IUserService
     {
         string GenerateToken(User user);
         Task<UserDto> AuthenticateAsync(string email, string password);
         Task<UserDto> UpdateProfileAsync(int userId, UpdateProfileDto dto);
-        Task ChangePasswordAsync(ChangePasswordDto dto);
+        Task ChangePasswordAsync(int userId, ChangePasswordDto dto);
         Task<UserDto> RegisterAsync(User user, string password);
         Task ValidateEmailAsync(string email);
         Task ActivateUserAsync(int userId);

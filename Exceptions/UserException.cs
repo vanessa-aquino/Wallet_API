@@ -24,12 +24,12 @@
             : base($"The email '{email}' is already in use.", innerException) { }
     }
 
-    public class InvalidCredentialsException : UserException
+    public class InvalidUserCredentialsException : UserException
     {
-        public InvalidCredentialsException()
+        public InvalidUserCredentialsException()
             : base("Invalid email or password.") { }
 
-        public InvalidCredentialsException(Exception innerException)
+        public InvalidUserCredentialsException(Exception innerException)
             :base("Invalid email or password", innerException) { }
     }
 }

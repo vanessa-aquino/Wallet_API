@@ -2,7 +2,6 @@
 using WalletAPI.Models.Enums;
 using WalletAPI.Models.DTOs;
 using WalletAPI.Exceptions;
-using WalletAPI.Interfaces;
 using WalletAPI.Constants;
 using WalletAPI.Models;
 using WalletAPI.Data;
@@ -10,6 +9,8 @@ using System.Globalization;
 using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using WalletAPI.Models.DTOs.Transaction;
+using WalletAPI.Interfaces.Repositories;
+using WalletAPI.Interfaces.Services;
 
 namespace WalletAPI.Services
 {

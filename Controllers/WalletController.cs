@@ -2,7 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using WalletAPI.Controllers.Base;
 using WalletAPI.Exceptions;
-using WalletAPI.Interfaces;
+using WalletAPI.Interfaces.Repositories;
+using WalletAPI.Interfaces.Services;
 using WalletAPI.Models.DTOs;
 using WalletAPI.Models.DTOs.Wallet;
 

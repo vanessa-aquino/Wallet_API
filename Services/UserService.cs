@@ -3,24 +3,27 @@ using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using WalletAPI.Exceptions;
-using WalletAPI.Interfaces;
 using WalletAPI.Models;
 using System.Text;
 using WalletAPI.Models.DTOs.User;
+using WalletAPI.Interfaces.Repositories;
+using WalletAPI.Interfaces.Services;
 
 namespace WalletAPI.Services
 {
     public class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
+        private readonly IUserContextService _userContextService;
         private readonly IConfiguration _configuration;
         private readonly IMemoryCache _cache;
         private readonly ILogger<UserService> _logger;
         private const string UserCacheKey = "User_";
 
-        public UserService(IUserRepository userRepository, IConfiguration configuration, IMemoryCache cache, ILogger<UserService> logger)
+        public UserService(IUserRepository userRepository, IUserContextService userContextService ,IConfiguration configuration, IMemoryCache cache, ILogger<UserService> logger)
         {
             _userRepository = userRepository;
+            _userContextService = userContextService;
             _configuration = configuration;
             _cache = cache;
             _logger = logger;
@@ -65,7 +68,7 @@ namespace WalletAPI.Services
                 if (user == null)
                 {
                     _logger.LogWarning($"Failed login attempt for email : {email}");
-                    throw new InvalidCredentialsException();
+                    throw new InvalidUserCredentialsException();
                 }
 
                 var cacheOptions = new MemoryCacheEntryOptions()
@@ -78,7 +81,7 @@ namespace WalletAPI.Services
             if (!user.VerifyPassword(password))
             {
                 _logger.LogWarning($"Failed login attempt for email : {email}");
-                throw new InvalidCredentialsException();
+                throw new InvalidUserCredentialsException();
             }
 
             var token = GenerateToken(user);
@@ -90,29 +93,34 @@ namespace WalletAPI.Services
                 LastName = user.LastName,
                 Token = token,
                 Email = email,
+                Phone = user.Phone,
                 Role = user.Role
             };
         }
 
-        public async Task ChangePasswordAsync(ChangePasswordDto dto)
+        public async Task ChangePasswordAsync(int userId, ChangePasswordDto dto)
         {
-            var user = await _userRepository.GetByIdAsync(dto.UserId);
+            var user = await _userRepository.GetByIdAsync(userId);
 
             if (user == null)
             {
-                _logger.LogWarning($"Attempted password change for non-existent user ID {dto.UserId}");
-                throw new UserNotFoundException(dto.UserId);
+                _logger.LogWarning($"Attempted password change for non-existent user ID {userId}");
+                throw new UserNotFoundException(userId);
             }
 
             if (!user.VerifyPassword(dto.CurrentPassword))
             {
-                _logger.LogWarning($"Incorrect current password for user ID {dto.UserId}");
-                throw new InvalidCredentialsException();
+                _logger.LogWarning($"Incorrect current password for user ID {userId}");
+                throw new InvalidUserCredentialsException();
             }
 
             user.SetPassword(dto.NewPassword);
             await _userRepository.UpdateAsync(user);
-            _logger.LogInformation($"Password changed successfully for user ID {dto.UserId}");
+
+            var cacheKey = $"{UserCacheKey}{user.Email}";
+            _cache.Remove(cacheKey);
+
+            _logger.LogInformation($"Password changed successfully for user ID {userId}");
         }
 
         public async Task ValidateEmailAsync(string email)

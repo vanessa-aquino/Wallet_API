@@ -1,7 +1,7 @@
 ﻿using WalletAPI.Models.Enums;
 using WalletAPI.Models;
 
-namespace WalletAPI.Interfaces
+namespace WalletAPI.Interfaces.Repositories
 {
     public interface ITransactionRepository
     {

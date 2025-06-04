@@ -2,12 +2,14 @@ using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using WalletAPI.Repositories;
 using System.Globalization;
-using WalletAPI.Interfaces;
 using WalletAPI.Services;
 using WalletAPI.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using WalletAPI.Interfaces.Repositories;
+using WalletAPI.Interfaces.Services;
+using WalletAPI.Models.DTOs.User;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -45,12 +47,14 @@ builder.Services.AddAuthentication(options =>
     });
 
 builder.Services.AddAuthentication();
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IWalletRepository, WalletRepository>();
 builder.Services.AddScoped<IWalletService, WalletService>();
 builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 builder.Services.AddScoped<ITransactionService, TransactionService>();
+builder.Services.AddScoped<IUserContextService, UserContextService>();
 
 var cultureInfo = new CultureInfo("pt-BR");
 CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
