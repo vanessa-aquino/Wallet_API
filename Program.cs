@@ -9,7 +9,6 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using WalletAPI.Interfaces.Repositories;
 using WalletAPI.Interfaces.Services;
-using WalletAPI.Models.DTOs.User;
 
 var builder = WebApplication.CreateBuilder(args);
 

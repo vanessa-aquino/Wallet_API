@@ -1,7 +1,7 @@
 ﻿using System.Security.Claims;
 using WalletAPI.Interfaces.Services;
 
-namespace WalletAPI.Models.DTOs.User
+namespace WalletAPI.Services
 {
     public class UserContextService : IUserContextService
     {

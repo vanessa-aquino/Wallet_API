@@ -29,6 +29,12 @@ namespace WalletAPI.Services
         public async Task UpdateAsync(User user) => await _userRepository.UpdateAsync(user);
         public DateTime GetTokenExpiration() => DateTime.Now.AddDays(1);
 
+        public async Task<User> GetUserById(int id)
+        {
+            var user = await _userRepository.GetByIdAsync(id);
+            return user;
+        }
+
         public string GenerateToken(User user)
         {
             var issuer = _configuration["Jwt:Issuer"];
@@ -245,8 +251,6 @@ namespace WalletAPI.Services
             return accountAge;
         }
 
-        
-
         public async Task<User?> GetByEmailAsync(string email)
         {
             var user = await _userRepository.GetByEmailAsync(email);
@@ -255,5 +259,12 @@ namespace WalletAPI.Services
             return user;
         }
 
+        public async Task DeleteUserAsync(int userId)
+        {
+            var user = await _userRepository.GetByIdAsync(userId);
+            await _userRepository.DeleteAsync(userId);
+            _logger.LogInformation($"User with Id {userId} deleted.");
+        }
+    
     }
 }

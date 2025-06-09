@@ -16,6 +16,8 @@ namespace WalletAPI.Models
         public string PasswordHash { get; set; }
         public DateTime CreatedAt { get; set; }
         public bool Active { get; set; }
+        public bool IsDeleted { get; set; }
+        public DateTime? DeletedAt { get; set; }
         public string Role { get; set; }
         public int? WalletId { get; set; }
         public Wallet? Wallet { get; set; }
@@ -28,6 +30,7 @@ namespace WalletAPI.Models
             CreatedAt = DateTime.Now;
             Active = true;
             Role = "User";
+            IsDeleted = false;
         }
 
         public User(int id, string firstName, string lastName, DateOnly birthDate, string email, string phone, string passwordHash)
@@ -42,6 +45,7 @@ namespace WalletAPI.Models
             CreatedAt = DateTime.Now;
             Active = true;
             Role = "User";
+            IsDeleted = false;
         }
 
         public void SetPassword(string password) => PasswordHash = BCrypt.Net.BCrypt.HashPassword(password);

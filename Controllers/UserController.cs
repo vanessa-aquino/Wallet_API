@@ -17,14 +17,14 @@ namespace WalletAPI.Controllers
         private readonly IUserService _userService;
         private readonly IUserContextService _userContextService;
 
-        public UserController(IUserService userService, IUserContextService userContextService ,IWalletService walletService)
+        public UserController(IUserService userService, IUserContextService userContextService, IWalletService walletService)
             : base(walletService)
         {
             _userService = userService;
             _userContextService = userContextService;
         }
 
-      
+
         [AllowAnonymous]
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto dto)
@@ -65,6 +65,42 @@ namespace WalletAPI.Controllers
             }
         }
 
+        [HttpGet("me")]
+        public async Task<ActionResult<UserProfileDto>> MyProfile()
+        {
+            try
+            {
+                var userId = _userContextService.GetUserId();
+                var user = await _userService.GetUserById(userId);
+
+                var userDto = new UserProfileDto
+                {
+                    FirstName = user.FirstName,
+                    LastName = user.LastName,
+                    Phone = user.Phone,
+                    Email = user.Email,
+                    Active = user.Active,
+                    BirthDate = user.BirthDate,
+                    CreatedAt = user.CreatedAt
+                };
+
+                return Ok(userDto);
+            }
+            catch (UserNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (InvalidUserCredentialsException)
+            {
+                return Unauthorized("Invalid credentials");
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { message = $"Internal server error" });
+
+            }
+        }
+
         [HttpPut("change-password")]
         public async Task<IActionResult> ChangePasswordAsync(int userId, [FromBody] ChangePasswordDto dto)
         {
@@ -78,11 +114,11 @@ namespace WalletAPI.Controllers
                 await _userService.ChangePasswordAsync(userId, dto);
                 return NoContent();
             }
-            catch(UserNotFoundException ex)
+            catch (UserNotFoundException ex)
             {
-                return NotFound(new { message = ex.Message});
+                return NotFound(new { message = ex.Message });
             }
-            catch(InvalidUserCredentialsException)
+            catch (InvalidUserCredentialsException)
             {
                 return Unauthorized("Invalid credentials");
             }
@@ -93,7 +129,7 @@ namespace WalletAPI.Controllers
             }
         }
 
-        [HttpPut("update-profile/{userId}")]
+        [HttpPut("update-profile")]
         public async Task<ActionResult> UpdateUser([FromBody] UpdateProfileDto dto)
         {
             try
@@ -122,6 +158,48 @@ namespace WalletAPI.Controllers
             {
                 return StatusCode(500, new { message = $"Internal server error" });
 
+            }
+        }
+
+        [HttpGet("account-age")]
+        public async Task<ActionResult<TimeSpan>> GetAccountAge(int userId)
+        {
+            try
+            {
+                var accessValidation = ValidateUserAccess(userId);
+                if (accessValidation != null) return accessValidation;
+
+                var accountAge = await _userService.GetAccountAgeAsync(userId);
+                return Ok(accountAge.Days);
+            }
+            catch (UserNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { message = "Internal server error" });
+            }
+        }
+
+        [HttpDelete("{userId}")]
+        public async Task<ActionResult> DeleteUser(int userId)
+        {
+            try
+            {
+                var accessValidation = ValidateUserAccess(userId);
+                if (accessValidation != null) return accessValidation;
+
+                await _userService.DeleteUserAsync(userId);
+                return NoContent();
+            }
+            catch (UserNotFoundException)
+            {
+                return NotFound($"User with ID {userId} not found.");
+            }
+            catch(Exception)
+            {
+                return StatusCode(500, new { message = $"Internal server error" });
             }
         }
 
@@ -163,27 +241,8 @@ namespace WalletAPI.Controllers
             }
         }
 
-        [HttpGet("account-age")]
-        public async Task<ActionResult<TimeSpan>> GetAccountAge(int userId)
-        {
-            try
-            {
-                var accessValidation = ValidateUserAccess(userId);
-                if (accessValidation != null) return accessValidation;
 
-                var accountAge = await _userService.GetAccountAgeAsync(userId);
-                return Ok(accountAge.Days);
-            }
-            catch (UserNotFoundException ex)
-            {
-                return NotFound(new { message = ex.Message });
-            }
-            catch (Exception)
-            {
-                return StatusCode(500, new { message = "Internal server error" });
-            }
-        }
 
-        
+
     }
 }
