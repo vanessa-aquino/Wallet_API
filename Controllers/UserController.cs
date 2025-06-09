@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using WalletAPI.Exceptions;
 using WalletAPI.Models;
 using WalletAPI.Interfaces.Services;
+using WalletAPI.Models.DTOs;
 
 namespace WalletAPI.Controllers
 {
@@ -197,7 +198,7 @@ namespace WalletAPI.Controllers
             {
                 return NotFound($"User with ID {userId} not found.");
             }
-            catch(Exception)
+            catch (Exception)
             {
                 return StatusCode(500, new { message = $"Internal server error" });
             }
@@ -241,8 +242,52 @@ namespace WalletAPI.Controllers
             }
         }
 
+        [HttpGet("{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult> GetUserOnlyAdmin(int id)
+        {
+            try
+            {
+                var user = await _userService.GetUserById(id);
 
+                var userDto = new UserProfileDto
+                {
+                    FirstName = user.FirstName,
+                    LastName = user.LastName,
+                    BirthDate = user.BirthDate,
+                    Email = user.Email,
+                    Phone = user.Phone,
+                    CreatedAt = user.CreatedAt,
+                    Active = user.Active
+                };
 
+                return Ok(userDto);
+            }
+            catch (UserNotFoundException ex)
+            {
+                return NotFound(new
+                { message = ex.Message });
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { message = "Internal server error" });
+            }
+        }
 
+        [HttpGet("user-list")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<PagedResultDto<UserProfileDto>>> GetAllUsers([FromQuery] UserQueryParams queryParams)
+        {
+            try
+            {
+                var result = await _userService.PaginationAsync(queryParams);
+                return Ok(result);
+            }
+
+            catch (Exception)
+            {
+                return StatusCode(500, new { message = "Internal server error" });
+            }
+        }
     }
 }

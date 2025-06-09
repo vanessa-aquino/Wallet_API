@@ -8,6 +8,7 @@ using System.Text;
 using WalletAPI.Models.DTOs.User;
 using WalletAPI.Interfaces.Repositories;
 using WalletAPI.Interfaces.Services;
+using WalletAPI.Models.DTOs;
 
 namespace WalletAPI.Services
 {
@@ -265,6 +266,10 @@ namespace WalletAPI.Services
             await _userRepository.DeleteAsync(userId);
             _logger.LogInformation($"User with Id {userId} deleted.");
         }
-    
+
+        public async Task<PagedResultDto<UserProfileDto>> PaginationAsync(UserQueryParams pagination)
+        {
+            return await _userRepository.PaginationAsync(pagination);
+        }
     }
 }

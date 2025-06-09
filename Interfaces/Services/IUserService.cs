@@ -1,4 +1,5 @@
 ﻿using WalletAPI.Models;
+using WalletAPI.Models.DTOs;
 using WalletAPI.Models.DTOs.User;
 
 namespace WalletAPI.Interfaces.Services
@@ -19,5 +20,6 @@ namespace WalletAPI.Interfaces.Services
         Task UpdateAsync(User user);
         Task<User?> GetByEmailAsync(string email);
         Task DeleteUserAsync(int userId);
+        Task<PagedResultDto<UserProfileDto>> PaginationAsync(UserQueryParams pagination);
     }
 }

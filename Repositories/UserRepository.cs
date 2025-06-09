@@ -3,6 +3,8 @@ using WalletAPI.Models;
 using WalletAPI.Data;
 using WalletAPI.Exceptions;
 using WalletAPI.Interfaces.Repositories;
+using WalletAPI.Models.DTOs.User;
+using WalletAPI.Models.DTOs;
 
 namespace WalletAPI.Repositories
 {
@@ -91,7 +93,7 @@ namespace WalletAPI.Repositories
                 if (string.IsNullOrWhiteSpace(user.FirstName) || string.IsNullOrWhiteSpace(user.Email))
                     throw new ArgumentException("User data is incomplete or invalid");
 
-               _context.Users.Update(user);
+                _context.Users.Update(user);
                 await _context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException dbEx)
@@ -136,6 +138,60 @@ namespace WalletAPI.Repositories
             {
                 throw new InvalidOperationException("An unexpected error occurred.", ex);
             }
+        }
+
+        public async Task<PagedResultDto<UserProfileDto>> PaginationAsync(UserQueryParams dto)
+        {
+            if (dto.Page < 1) dto.Page = 1;
+            if (dto.PageSize <= 0) dto.PageSize = 10;
+
+            IQueryable<User> query;
+
+            if (dto.OnlyDeleted == true)
+                query = _context.Users.IgnoreQueryFilters().Where(u => u.IsDeleted);
+            else
+                query = _context.Users.AsQueryable();
+
+            if (dto.Active.HasValue)
+                query = query.Where(u => u.Active == dto.Active.Value);
+
+            if (!string.IsNullOrWhiteSpace(dto.Search))
+            {
+                var search = dto.Search.ToLower();
+                query = query.Where(u =>
+                    u.FirstName.ToLower().Contains(search) ||
+                    u.LastName.ToLower().Contains(search) ||
+                    u.Email.ToLower().Contains(search));
+            }
+
+            var totalItems = await query.CountAsync();
+
+
+            var users = await query
+                .Skip((dto.Page - 1) * dto.PageSize)
+                .Take(dto.PageSize)
+                .ToListAsync();
+
+            var userDto = users.Select(u => new UserProfileDto
+            {
+                FirstName = u.FirstName,
+                LastName = u.LastName,
+                BirthDate = u.BirthDate,
+                Email = u.Email,
+                Phone = u.Phone,
+                Active = u.Active,
+                CreatedAt = u.CreatedAt
+            }).ToList();
+
+            return new PagedResultDto<UserProfileDto>
+            {
+                Users = userDto,
+                TotalUsers = totalItems,
+                Page = dto.Page,
+                PageSize = dto.PageSize,
+                TotalPages = (int)Math.Ceiling(totalItems / (double)dto.PageSize)
+
+            };
         }
     }
 }
