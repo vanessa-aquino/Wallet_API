@@ -14,20 +14,20 @@ namespace WalletAPI.Services
     public class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
-        private readonly IUserContextService _userContextService;
         private readonly IConfiguration _configuration;
         private readonly IMemoryCache _cache;
         private readonly ILogger<UserService> _logger;
         private const string UserCacheKey = "User_";
 
-        public UserService(IUserRepository userRepository, IUserContextService userContextService ,IConfiguration configuration, IMemoryCache cache, ILogger<UserService> logger)
+        public UserService(IUserRepository userRepository, IConfiguration configuration, IMemoryCache cache, ILogger<UserService> logger)
         {
             _userRepository = userRepository;
-            _userContextService = userContextService;
             _configuration = configuration;
             _cache = cache;
             _logger = logger;
         }
+        public async Task UpdateAsync(User user) => await _userRepository.UpdateAsync(user);
+        public DateTime GetTokenExpiration() => DateTime.Now.AddDays(1);
 
         public string GenerateToken(User user)
         {
@@ -245,12 +245,15 @@ namespace WalletAPI.Services
             return accountAge;
         }
 
-        public DateTime GetTokenExpiration()
-        {
-            return DateTime.Now.AddDays(1);
-        }
+        
 
-        public async Task UpdateAsync(User user) => await _userRepository.UpdateAsync(user);
+        public async Task<User?> GetByEmailAsync(string email)
+        {
+            var user = await _userRepository.GetByEmailAsync(email);
+            if (user == null)
+                throw new UserNotFoundException($"User with email {email} not found.");
+            return user;
+        }
 
     }
 }

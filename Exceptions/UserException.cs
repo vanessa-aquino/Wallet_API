@@ -10,7 +10,8 @@
     {
         public UserNotFoundException(int userId)
             : base($"User with ID {userId} not found.") { }
-
+        public UserNotFoundException(string email)
+            : base($"User with email: {email} not found.") { }
         public UserNotFoundException(int userId, Exception innerException)
             : base($"User with ID {userId} not found.", innerException) { }
     }

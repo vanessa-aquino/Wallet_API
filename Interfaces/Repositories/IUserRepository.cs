@@ -6,7 +6,7 @@ namespace WalletAPI.Interfaces.Repositories
     {
         Task<User> AddAsync(User user);
         Task<User> GetByIdAsync(int id);
-        Task<User> GetByEmailAsync(string email);
+        Task<User?> GetByEmailAsync(string email);
         Task<IEnumerable<User>> GetAllAsync();
         Task UpdateAsync(User user);
         Task<bool> DeleteAsync(int id);

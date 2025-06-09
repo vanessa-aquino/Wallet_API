@@ -65,7 +65,7 @@ namespace WalletAPI.Controllers
             }
         }
 
-        [HttpPut("changePassword")]
+        [HttpPut("change-password")]
         public async Task<IActionResult> ChangePasswordAsync(int userId, [FromBody] ChangePasswordDto dto)
         {
             try
@@ -93,7 +93,7 @@ namespace WalletAPI.Controllers
             }
         }
 
-        [HttpPut("updateProfile/{userId}")]
+        [HttpPut("update-profile/{userId}")]
         public async Task<ActionResult> UpdateUser([FromBody] UpdateProfileDto dto)
         {
             try
@@ -163,7 +163,7 @@ namespace WalletAPI.Controllers
             }
         }
 
-        [HttpGet("accountAge")]
+        [HttpGet("account-age")]
         public async Task<ActionResult<TimeSpan>> GetAccountAge(int userId)
         {
             try
@@ -184,5 +184,6 @@ namespace WalletAPI.Controllers
             }
         }
 
+        
     }
 }

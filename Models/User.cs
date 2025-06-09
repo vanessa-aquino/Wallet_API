@@ -20,6 +20,8 @@ namespace WalletAPI.Models
         public int? WalletId { get; set; }
         public Wallet? Wallet { get; set; }
         public List<Transaction> Transactions { get; set; }
+        public ICollection<PasswordResetToken> PasswordResetTokens { get; set; }
+
 
         public User()
         {
