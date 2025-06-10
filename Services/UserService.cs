@@ -6,10 +6,10 @@ using WalletAPI.Interfaces.Services;
 using WalletAPI.Models.DTOs.User;
 using WalletAPI.Models.Enums;
 using System.Security.Claims;
-using WalletAPI.Models.DTOs;
 using WalletAPI.Exceptions;
 using WalletAPI.Models;
 using System.Text;
+using WalletAPI.Models.DTOs;
 
 namespace WalletAPI.Services
 {

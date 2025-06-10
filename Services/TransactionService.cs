@@ -56,17 +56,17 @@ namespace WalletAPI.Services
             return input;
         }
 
-        private TransactionResponseDto MapToDto(Transaction transaction)
+        private TransactionDto MapToDto(Transaction transaction)
         {
-            return new TransactionResponseDto
+            return new TransactionDto
             {
                 Id = transaction.Id,
                 Amount = transaction.Amount,
-                TransactionType = transaction.TransactionType.ToString(),
+                TransactionType = transaction.TransactionType,
                 Date = transaction.Date,
-                Status = transaction.Status.ToString(),
+                Status = transaction.Status,
                 Description = transaction.Description,
-                WalletId = transaction.WalletId
+                WalletName = $"{transaction.User.FirstName} {transaction.User.LastName}"
             };
         }
 
@@ -165,7 +165,7 @@ namespace WalletAPI.Services
             };
         }
 
-        public async Task<TransactionResponseDto> GetByIdAsync(int id)
+        public async Task<TransactionDto> GetByIdAsync(int id)
         {
             var transaction = await _transactionRepository.GetByIdAsync(id);
             return MapToDto(transaction);

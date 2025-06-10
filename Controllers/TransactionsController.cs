@@ -38,7 +38,7 @@ namespace WalletAPI.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<TransactionResponseDto>> GetTransactionById(int id)
+        public async Task<ActionResult<TransactionDto>> GetTransactionById(int id)
         {
             try
             {

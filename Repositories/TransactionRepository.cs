@@ -1,8 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using WalletAPI.Interfaces.Repositories;
+using WalletAPI.Models.DTOs.Transaction;
+using Microsoft.EntityFrameworkCore;
+using WalletAPI.Models.Enums;
+using WalletAPI.Models.DTOs;
 using WalletAPI.Models;
 using WalletAPI.Data;
-using WalletAPI.Models.Enums;
-using WalletAPI.Interfaces.Repositories;
 
 namespace WalletAPI.Repositories
 {
@@ -17,113 +19,54 @@ namespace WalletAPI.Repositories
 
         public async Task<Transaction> AddAsync(Transaction transaction)
         {
-            try
-            {
-                _context.Transactions.Add(transaction);
-                await _context.SaveChangesAsync();
-                return transaction;
-            }
-            catch (DbUpdateException dbEx)
-            {
-                throw new InvalidOperationException($"An error occurred while adding the transaction to the database (ID: {transaction.Id}).", dbEx);
-
-            }
+            _context.Transactions.Add(transaction);
+            await _context.SaveChangesAsync();
+            return transaction;
         }
 
         public async Task<Transaction> GetByIdAsync(int id)
         {
-            try
-            {
-                var transaction = await _context.Transactions
-                    .Include(t => t.Wallet)
-                    .FirstOrDefaultAsync(t => t.Id == id);
+            var transaction = await _context.Transactions
+                .Include(t => t.Wallet)
+                .Include(t => t.User)
+                .SingleOrDefaultAsync(t => t.Id == id);
 
-                if (transaction == null)
-                {
-                    throw new KeyNotFoundException($"Transaction with ID {id} not found.");
-                }
-                return transaction;
-            }
-            catch (KeyNotFoundException knfEx)
-            {
-                throw new KeyNotFoundException("transaction not found", knfEx);
-            }
-            catch (Exception ex)
-            {
-                throw new InvalidOperationException("An error occurred while fetching the transaction.", ex);
-            }
+            if (transaction == null)
+                throw new KeyNotFoundException($"Transaction with ID {id} not found.");
+
+            return transaction;
         }
 
         public async Task<IEnumerable<Transaction>> GetAllAsync()
         {
-            try
-            {
-                return await _context.Transactions
-                    .Include(t => t.Wallet)
-                    .ToListAsync();
-            }
-            catch (Exception ex)
-            {
-                throw new InvalidOperationException("An error occurred while fetching the transaction.", ex);
-            }
+            return await _context.Transactions
+                .Include(t => t.Wallet)
+                .Include(t => t.User)
+                .ToListAsync();
         }
 
         public async Task UpdateAsync(Transaction transaction)
         {
-            try
-            {
-                var existingTransaction = await _context.Transactions
-                    .AsNoTracking()
-                    .FirstOrDefaultAsync(t => t.Id == transaction.Id);
+            var existingTransaction = await _context.Transactions
+                .AsNoTracking()
+                .FirstOrDefaultAsync(t => t.Id == transaction.Id);
 
-                if (existingTransaction == null)
-                {
-                    throw new KeyNotFoundException($"Transaction with id {transaction.Id} not found");
+            if (existingTransaction == null)
+                throw new KeyNotFoundException($"Transaction with id {transaction.Id} not found");
 
-                }
-
-                _context.Entry(transaction).State = EntityState.Modified;
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException dbEx)
-            {
-                throw new KeyNotFoundException($"Transaction with id {transaction.Id} not found", dbEx);
-            }
-            catch (DbUpdateException dbEx)
-            {
-                throw new InvalidOperationException("An error occurred while updating the transaction.", dbEx);
-            }
-            catch (Exception ex)
-            {
-                throw new InvalidOperationException("An unexpected error occurred.", ex);
-            }
+            _context.Entry(transaction).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
         }
 
         public async Task<bool> DeleteAsync(int id)
         {
-            try
-            {
-                var transaction = await _context.Transactions.FindAsync(id);
-                if (transaction == null)
-                {
-                    throw new KeyNotFoundException($"Transaction with ID {id} not found.");
-                }
-                _context.Transactions.Remove(transaction);
-                await _context.SaveChangesAsync();
-                return true;
-            }
-            catch (KeyNotFoundException knfEx)
-            {
-                throw new("Transaction not found", knfEx);
-            }
-            catch (DbUpdateException dbEx)
-            {
-                throw new InvalidOperationException("An error occurred while deleting the transaction.", dbEx);
-            }
-            catch (Exception ex)
-            {
-                throw new InvalidOperationException("An unexpected error occurred.", ex);
-            }
+            var transaction = await _context.Transactions.FindAsync(id);
+            if (transaction == null)
+                throw new KeyNotFoundException($"Transaction with ID {id} not found.");
+
+            _context.Transactions.Remove(transaction);
+            await _context.SaveChangesAsync();
+            return true;
         }
 
         public async Task<bool> IsFirstWithdrawOfMonthAsync(int userId)
@@ -131,27 +74,20 @@ namespace WalletAPI.Repositories
             var now = DateTime.Now;
             var firstDayOfMonth = new DateTime(now.Year, now.Month, 1);
 
-            var thereWasdraw = await _context.Transactions
+            var hasWithDraw = await _context.Transactions
                 .AnyAsync(t => t.Status == TransactionStatus.Completed &&
                             t.UserId == userId &&
                             t.TransactionType == TransactionType.Withdraw &&
                             t.Date >= firstDayOfMonth);
 
-            return !thereWasdraw;
+            return !hasWithDraw;
         }
 
         public async Task<int> CountByWalletIdAsync(int walletId)
         {
-            try
-            {
-                return await _context.Transactions
-                    .Where(t => t.WalletId == walletId)
-                    .CountAsync();
-            }
-            catch (Exception ex)
-            {
-                throw new InvalidOperationException("An error occurred while counting transactions.", ex);
-            }
+            return await _context.Transactions
+                .Where(t => t.WalletId == walletId)
+                .CountAsync();
         }
 
         public async Task<IEnumerable<Transaction>> GetFilteredAsync(
@@ -162,31 +98,75 @@ namespace WalletAPI.Repositories
             TransactionType? type = null
         )
         {
-            try
+            var query = _context.Transactions
+                .Include(t => t.Wallet)
+                .Include(t => t.User)
+                .Where(t => t.WalletId == walletId);
+
+            if (startDate.HasValue)
+                query = query.Where(t => t.Date >= startDate.Value);
+
+            if (endDate.HasValue)
+                query = query.Where(t => t.Date <= endDate.Value);
+
+            if (status.HasValue)
+                query = query.Where(t => t.Status == status.Value);
+
+            if (type.HasValue)
+                query = query.Where(t => t.TransactionType == type.Value);
+
+            return await query.OrderByDescending(t => t.Date).ToListAsync();
+        }
+
+        public async Task<PagedResultDto<TransactionDto>> GetPaginationAsync(TransactionQueryParams dto)
+        {
+            if (dto.Page < 1) dto.Page = 1;
+            if (dto.PageSize <= 0) dto.PageSize = 10;
+
+            var query = _context.Transactions
+                .Include(t => t.Wallet)
+                .Where(t => t.WalletId == dto.WalletId)
+                .AsQueryable();
+
+            if (dto.StartDate.HasValue)
+                query = query.Where(t => t.Date >= dto.StartDate.Value);
+
+            if(dto.EndDate.HasValue)
+                query = query.Where(t => t.Date <= dto.EndDate.Value);
+
+            if(dto.Status.HasValue)
+                query = query.Where(t => t.Status == dto.Status.Value);
+
+            if (dto.Type.HasValue)
+                query = query.Where(t => t.TransactionType == dto.Type.Value);
+
+            var totalItems = await query.CountAsync();
+
+            var transactions = await query
+                .OrderByDescending(t => t.Date)
+                .Skip((dto.Page -1) * dto.PageSize)
+                .Take(dto.PageSize)
+                .ToListAsync();
+
+            var dtoList = transactions.Select(t => new TransactionDto
             {
-                var query = _context.Transactions
-                    .Include(t => t.Wallet)
-                    .Where(t => t.WalletId == walletId);
+                Id = t.Id,
+                Amount = t.Amount,
+                Date = t.Date,
+                Description = t.Description,
+                Status = t.Status,
+                TransactionType = t.TransactionType,
+                WalletName = $"{t.Wallet.User.FirstName} {t.Wallet.User.LastName}"
+            }).ToList();
 
-                if (startDate.HasValue)
-                    query = query.Where(t => t.Date >= startDate.Value);
-
-                if (endDate.HasValue)
-                    query = query.Where(t => t.Date <= endDate.Value);
-
-                if (status.HasValue)
-                    query = query.Where(t => t.Status == status.Value);
-
-                if (type.HasValue)
-                    query = query.Where(t => t.TransactionType == type.Value);
-
-                return await query.OrderByDescending(t => t.Date).ToListAsync();
-            }
-            catch (Exception ex)
+            return new PagedResultDto<TransactionDto>
             {
-                throw new InvalidOperationException("Error fetching filtered transactions.", ex);
-            }
+                Data = dtoList,
+                TotalItems = totalItems,
+                Page = dto.Page,
+                PageSize = dto.PageSize,
+                TotalPages = (int)Math.Ceiling(totalItems / (double)dto.PageSize)
+            };
         }
     }
-
 }

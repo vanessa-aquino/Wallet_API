@@ -1,10 +1,10 @@
 ﻿using WalletAPI.Interfaces.Repositories;
 using Microsoft.EntityFrameworkCore;
 using WalletAPI.Models.DTOs.User;
-using WalletAPI.Models.DTOs;
 using WalletAPI.Exceptions;
 using WalletAPI.Models;
 using WalletAPI.Data;
+using WalletAPI.Models.DTOs;
 
 namespace WalletAPI.Repositories
 {

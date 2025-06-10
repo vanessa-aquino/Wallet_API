@@ -6,8 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 using WalletAPI.Exceptions;
 using WalletAPI.Models;
 using WalletAPI.Interfaces.Services;
-using WalletAPI.Models.DTOs;
 using WalletAPI.Models.Enums;
+using WalletAPI.Models.DTOs;
 
 namespace WalletAPI.Controllers
 {

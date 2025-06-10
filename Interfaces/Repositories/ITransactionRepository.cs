@@ -1,4 +1,6 @@
-﻿using WalletAPI.Models.Enums;
+﻿using WalletAPI.Models.DTOs.Transaction;
+using WalletAPI.Models.Enums;
+using WalletAPI.Models.DTOs;
 using WalletAPI.Models;
 
 namespace WalletAPI.Interfaces.Repositories
@@ -18,5 +20,6 @@ namespace WalletAPI.Interfaces.Repositories
             TransactionStatus? status = null,
             TransactionType? type = null
         );
+        Task<PagedResultDto<TransactionDto>> GetPaginationAsync(TransactionQueryParams dto);
     }
 }
