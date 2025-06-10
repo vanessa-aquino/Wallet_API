@@ -1,8 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore;
-using WalletAPI.Data;
+﻿using WalletAPI.Interfaces.Repositories;
+using Microsoft.EntityFrameworkCore;
 using WalletAPI.Exceptions;
-using WalletAPI.Interfaces.Repositories;
 using WalletAPI.Models;
+using WalletAPI.Data;
 
 namespace WalletAPI.Repositories
 {
@@ -17,17 +17,9 @@ namespace WalletAPI.Repositories
 
         public async Task<Wallet> AddAsync(Wallet wallet)
         {
-            try
-            {
-                _context.Wallets.Add(wallet);
-                await _context.SaveChangesAsync();
-                return wallet;
-            }
-            catch (DbUpdateException dbEx)
-            {
-                throw new InvalidOperationException("An error occurred while adding the wallet to the database.", dbEx);
-
-            }
+            _context.Wallets.Add(wallet);
+            await _context.SaveChangesAsync();
+            return wallet;
         }
 
         public async Task<Wallet> GetByIdAsync(int id)
@@ -35,8 +27,7 @@ namespace WalletAPI.Repositories
             var wallet = await _context.Wallets
                 .Include(w => w.User)
                 .Include(w => w.Transactions)
-                .Where(w => w.Id == id && !w.IsDeleted)
-                .FirstOrDefaultAsync();
+                .FirstOrDefaultAsync(w => w.Id == id);
 
             if (wallet == null)
                 throw new WalletNotFoundException(id);
@@ -49,83 +40,40 @@ namespace WalletAPI.Repositories
             return await _context.Wallets
                 .Include(w => w.User)
                 .Include(w => w.Transactions)
-                .Where(w => w.UserId == userId && !w.IsDeleted)
-                .FirstOrDefaultAsync();
+                .FirstOrDefaultAsync(w => w.UserId == userId);
         }
 
         public async Task<IEnumerable<Wallet>> GetAllAsync()
         {
-            try
-            {
-                return await _context.Wallets
-                    .Include(w => w.User)
-                    .Include(w => w.Transactions)
-                    .Where(w => !w.IsDeleted)
-                    .ToListAsync();
-            }
-            catch (Exception ex)
-            {
-                throw new InvalidOperationException("An error occurred while fetching the wallet.", ex);
-            }
+            return await _context.Wallets
+                .Include(w => w.User)
+                .Include(w => w.Transactions)
+                .ToListAsync();
         }
 
         public async Task UpdateAsync(Wallet wallet)
         {
-            try
-            {
-                var existingWallet = await _context.Wallets
-                    .FirstOrDefaultAsync(w => w.Id == wallet.Id && !w.IsDeleted);
+            var existingWallet = await _context.Wallets
+                .FirstOrDefaultAsync(w => w.Id == wallet.Id && !w.IsDeleted);
 
-                if (existingWallet == null)
-                {
-                    throw new KeyNotFoundException($"Wallet with id {wallet.Id} not found");
+            if (existingWallet == null)
+                throw new KeyNotFoundException($"Wallet with id {wallet.Id} not found");
 
-                }
-
-                _context.Entry(wallet).State = EntityState.Modified;
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException dbEx)
-            {
-                throw new KeyNotFoundException($"Wallet with id {wallet.Id} not found", dbEx);
-            }
-            catch (DbUpdateException dbEx)
-            {
-                throw new InvalidOperationException("An error occurred while updating the wallet.", dbEx);
-            }
-            catch (Exception ex)
-            {
-                throw new InvalidOperationException("An unexpected error occurred.", ex);
-            }
-
+            _context.Entry(wallet).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
         }
 
-        public async Task<bool> DeleteAsync(int id)
+        public async Task DeleteAsync(int id)
         {
-            try
-            {
-                var wallet = await _context.Wallets.FirstOrDefaultAsync(w => w.Id == id && !w.IsDeleted);
+            var wallet = await _context.Wallets.FirstOrDefaultAsync(w => w.Id == id && !w.IsDeleted);
 
-                if (wallet == null)
-                    throw new KeyNotFoundException($"Wallet with ID {id} not found.");
+            if (wallet == null)
+                throw new KeyNotFoundException($"Wallet with ID {id} not found.");
 
-                wallet.IsDeleted = true;
-                wallet.DeletedAt = DateTime.Now;
-                await _context.SaveChangesAsync();
-                return true;
-            }
-            catch (KeyNotFoundException knfEx)
-            {
-                throw new("Wallet not found", knfEx);
-            }
-            catch (DbUpdateException dbEx)
-            {
-                throw new InvalidOperationException("An error occurred while deleting the wallet.", dbEx);
-            }
-            catch (Exception ex)
-            {
-                throw new InvalidOperationException("An unexpected error occurred.", ex);
-            }
+            wallet.IsDeleted = true;
+            wallet.DeletedAt = DateTime.Now;
+            await _context.SaveChangesAsync();
         }
+
     }
 }

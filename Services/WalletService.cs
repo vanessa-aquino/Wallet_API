@@ -1,10 +1,10 @@
 ﻿using Microsoft.Extensions.Caching.Memory;
+using WalletAPI.Interfaces.Repositories;
+using WalletAPI.Interfaces.Services;
+using WalletAPI.Models.DTOs.Wallet;
+using System.Security.Claims;
 using WalletAPI.Exceptions;
 using WalletAPI.Models;
-using System.Security.Claims;
-using WalletAPI.Models.DTOs.Wallet;
-using WalletAPI.Interfaces.Services;
-using WalletAPI.Interfaces.Repositories;
 
 namespace WalletAPI.Services
 {
@@ -35,7 +35,7 @@ namespace WalletAPI.Services
 
             _logger.LogInformation($"Cache invalited for user ID {userId} and wallet ID {walletId}");
         }
-        
+
         public async Task<bool> HasAccessAsync(int walletId, int userId, ClaimsPrincipal userClaims)
         {
             var wallet = await _walletRepository.GetByIdAsync(walletId);
@@ -45,6 +45,7 @@ namespace WalletAPI.Services
             var isOwner = wallet.UserId == userId;
             var isAdmin = userClaims.IsInRole("Admin");
 
+            Console.WriteLine($"Wallet.Id: {wallet.Id}, wallet.UserId {wallet.UserId}, request UserId: {userId}");
             return isOwner || isAdmin;
         }
 
@@ -60,7 +61,7 @@ namespace WalletAPI.Services
         {
             var wallet = await _walletRepository.GetByIdAsync(walletId)
                         ?? throw new WalletNotFoundException(walletId);
-            
+
             wallet.Activate();
             await _walletRepository.UpdateAsync(wallet);
 
@@ -128,26 +129,26 @@ namespace WalletAPI.Services
                 UserId = user.Id,
                 Balance = wallet.Balance,
                 Active = wallet.Active,
-                UserName = user.FirstName + " " + user.LastName
+                UserName = $"{user.FirstName} {user.LastName}"
             };
         }
 
         public async Task<decimal> GetBalanceAsync(int walletId, int currentUserId)
         {
-            var cacheKey = $"{WalletCacheKey}Balance_{walletId}";
+            var cacheKey = $"{WalletCacheKey}{walletId}";
 
             if (!_cache.TryGetValue(cacheKey, out decimal balance))
             {
                 _logger.LogInformation($"Fetching balance for wallet ID {walletId} from the database.");
                 var wallet = await _walletRepository.GetByIdAsync(walletId);
 
-                if( wallet == null )
+                if (wallet == null)
                 {
                     _logger.LogWarning($"Wallet with ID {walletId} not found.");
                     throw new WalletNotFoundException(walletId);
                 }
 
-                if(wallet.UserId != currentUserId)
+                if (wallet.UserId != currentUserId)
                 {
                     _logger.LogWarning($"User {currentUserId} attempted to access wallet {walletId} wich does not belong to them.");
                     throw new UnauthorizedAccessException("You do not have permission to view the balance of this wallet.");
@@ -184,7 +185,7 @@ namespace WalletAPI.Services
 
             }
 
-            if(wallet == null || wallet.User == null) return null;
+            if (wallet == null || wallet.User == null) return null;
 
             return new WalletDto
             {
@@ -193,20 +194,20 @@ namespace WalletAPI.Services
                 Active = wallet.Active,
                 Balance = wallet.Balance,
                 CreatedAt = wallet.CreatedAt,
-                UserName = wallet.User.FirstName + " " + wallet.User.LastName
+                UserName = $"{wallet.User.FirstName} {wallet.User.LastName}"
             };
         }
 
-        public async Task ValidateSufficientFunds(int walletId, int currentUserId ,decimal amount)
+        public async Task ValidateSufficientFunds(int walletId, int currentUserId, decimal amount)
         {
             var balance = await GetBalanceAsync(walletId, currentUserId);
-            if(balance < amount)
+            if (balance < amount)
             {
                 _logger.LogWarning($"Insufficient funds in wallet ID {walletId}. Available balance: {balance}, Required: {amount}");
                 throw new WalletException($"Insufficient funds in wallet ID {walletId}. Available balance: {balance}, Required: {amount}");
             }
         }
-    
+
         public async Task<WalletDto> GetWalletByIdAsync(int walletId)
         {
             var wallet = await _walletRepository.GetByIdAsync(walletId);
@@ -217,12 +218,12 @@ namespace WalletAPI.Services
                 Id = wallet.Id,
                 UserId = wallet.UserId,
                 Active = wallet.Active,
-                Balance= wallet.Balance,
+                Balance = wallet.Balance,
                 CreatedAt = wallet.CreatedAt,
-                UserName = wallet.User.FirstName + " " + wallet.User.LastName
+                UserName = $"{wallet.User.FirstName} {wallet.User.LastName}"
             };
         }
-    
+
         public async Task<IEnumerable<AllWalletsDto>> GetAllWalletsAsync()
         {
             var listWallets = await _walletRepository.GetAllAsync();
@@ -231,16 +232,19 @@ namespace WalletAPI.Services
             {
                 Id = w.Id,
                 Active = w.Active,
-               CreatedAt = w.CreatedAt,
-               UserId = w.UserId,
-               UserName = w.User?.FirstName + " " + w.User?.LastName
+                CreatedAt = w.CreatedAt,
+                UserId = w.UserId,
+                UserName = $"{w.User?.FirstName} {w.User?.LastName}"
             });
-         
+
         }
 
         public async Task DeleteWalletAsync(int walletId)
         {
             var wallet = await _walletRepository.GetByIdAsync(walletId);
+            if(wallet == null)
+                throw new WalletNotFoundException(walletId);
+            
             await _walletRepository.DeleteAsync(walletId);
             InvalidateCache(wallet.UserId, wallet.Id);
             _logger.LogInformation($"Wallet with Id {walletId} deleted.");

@@ -14,10 +14,12 @@ namespace WalletAPI.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // Filtro global para ignorar usuários soft deleted
+            // Filtro global para ignorar softs deleteds
             modelBuilder.Entity<User>()
                 .HasQueryFilter(u => !u.IsDeleted);
-
+            modelBuilder.Entity<Wallet>()
+                .HasQueryFilter(w => !w.IsDeleted);
+            
             // User -> Wallet (1:1)
             modelBuilder.Entity<User>()
                 .HasOne(u => u.Wallet)
