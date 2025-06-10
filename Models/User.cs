@@ -1,41 +1,40 @@
-﻿using BCrypt.Net;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
+using WalletAPI.Models.Enums;
 
 namespace WalletAPI.Models
 {
     public class User
     {
         public int Id { get; set; }
-        public string FirstName { get; set; }
-        public string LastName { get; set; }
-        public DateOnly BirthDate { get; set; }
-        public string Email { get; set; }
+
+        [Required] public string FirstName { get; set; } = null!;
+        [Required] public string LastName { get; set; } = null!;
+        [Required] public DateOnly BirthDate { get; set; }
+        [Required, EmailAddress] public string Email { get; set; } = null!;
+        [Required] public string Phone { get; set; } = null!;
 
         [RegularExpression(@"\(?\d{2}\)?\s?\d{5}-\d{4}", ErrorMessage = "Formato de telefone inválido. Use 99 99999-9999.")]
-        public string Phone { get; set; }
-        public string PasswordHash { get; set; }
+        [Required, DataType(DataType.Password)] public string PasswordHash { get; set; } = null!;
         public DateTime CreatedAt { get; set; }
         public bool Active { get; set; }
         public bool IsDeleted { get; set; }
         public DateTime? DeletedAt { get; set; }
-        public string Role { get; set; }
+        public UserRole Role { get; set; } = UserRole.User;
         public int? WalletId { get; set; }
         public Wallet? Wallet { get; set; }
-        public List<Transaction> Transactions { get; set; }
-        public ICollection<PasswordResetToken> PasswordResetTokens { get; set; }
+        public List<Transaction> Transactions { get; set; } = new List<Transaction>();
+        public ICollection<PasswordResetToken> PasswordResetTokens { get; set; } = new List<PasswordResetToken>();
 
 
         public User()
         {
             CreatedAt = DateTime.Now;
             Active = true;
-            Role = "User";
             IsDeleted = false;
         }
 
-        public User(int id, string firstName, string lastName, DateOnly birthDate, string email, string phone, string passwordHash)
+        public User(string firstName, string lastName, DateOnly birthDate, string email, string phone, string passwordHash)
         {
-            Id = id;
             FirstName = firstName;
             LastName = lastName;
             BirthDate = birthDate;
@@ -44,7 +43,6 @@ namespace WalletAPI.Models
             PasswordHash = passwordHash;
             CreatedAt = DateTime.Now;
             Active = true;
-            Role = "User";
             IsDeleted = false;
         }
 
@@ -56,18 +54,22 @@ namespace WalletAPI.Models
         public TimeSpan GetAccountAge() => DateTime.Now.Subtract(CreatedAt);
         public void UpdateProfile(string? firstName, string? lastName, string? email, string? phone)
         {
-            if(!string.IsNullOrWhiteSpace(firstName) && firstName != "string")
+            if (!string.IsNullOrWhiteSpace(firstName) && firstName != "string")
                 FirstName = firstName;
-            if(!string.IsNullOrWhiteSpace(lastName) && lastName != "string")
+            if (!string.IsNullOrWhiteSpace(lastName) && lastName != "string")
                 LastName = lastName;
-            if(!string.IsNullOrWhiteSpace(email) && email != "string")
-                Email = email;
-            if(!string.IsNullOrWhiteSpace(phone) && phone != "string")
-                Phone = phone;
+
+            if (!string.IsNullOrWhiteSpace(email) && email != "string")
+                if (new EmailAddressAttribute().IsValid(email))
+                    Email = email;
+                else
+                    throw new ArgumentException("Invalid email format", nameof(email));
+
+            if (!string.IsNullOrWhiteSpace(phone) && phone != "string")
+                if (new RegularExpressionAttribute(@"\(?\d{2}\)?\s?\d{5}-\d{4}").IsValid(phone))
+                    Phone = phone;
+                else
+                    throw new ArgumentException("Invalid phone format", nameof(phone));
         }
-
-
     }
-
-
 }
