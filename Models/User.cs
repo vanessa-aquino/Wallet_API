@@ -16,9 +16,8 @@ namespace WalletAPI.Models
         public DateOnly BirthDate { get; set; }
 
         [Required, EmailAddress] public string Email { get; set; } = null!;
-        [Required] public string Phone { get; set; } = null!;
-
         [RegularExpression(@"^\d{10,11}$", ErrorMessage = "Formato de telefone inválido. Use 99 99999-9999.")]
+        [Required] public string Phone { get; set; } = null!;
         [Required, DataType(DataType.Password)] public string PasswordHash { get; set; } = null!;
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public bool Active { get; set; } = true;
