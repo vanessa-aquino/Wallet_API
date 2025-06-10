@@ -114,12 +114,21 @@ namespace WalletAPI.Repositories
         {
             try
             {
-                var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == id && !u.IsDeleted);
+                var user = await _context.Users
+                    .Include(u => u.Wallet)
+                    .FirstOrDefaultAsync(u => u.Id == id && !u.IsDeleted);
                 if (user == null)
                     throw new UserNotFoundException(id);
 
                 user.IsDeleted = true;
                 user.DeletedAt = DateTime.Now;
+
+                if(user.Wallet != null)
+                {
+                    user.Wallet.IsDeleted = true;
+                    user.Wallet.DeletedAt = DateTime.Now;
+                    user.Wallet.Active = false;
+                }
 
                 _context.Users.Update(user);
 
