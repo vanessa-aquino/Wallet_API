@@ -6,6 +6,7 @@ using WalletAPI.Interfaces.Repositories;
 using WalletAPI.Interfaces.Services;
 using WalletAPI.Models.DTOs;
 using WalletAPI.Models.DTOs.Wallet;
+using WalletAPI.Models.Enums;
 
 namespace WalletAPI.Controllers
 {
@@ -191,7 +192,7 @@ namespace WalletAPI.Controllers
         }
 
         [HttpGet("admin")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = nameof(UserRole.Admin))]
         public async Task<ActionResult<IEnumerable<AllWalletsDto>>> GetAllWalletsAsync()
         {
             try

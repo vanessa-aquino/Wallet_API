@@ -1,4 +1,6 @@
-﻿namespace WalletAPI.Models.DTOs.User
+﻿using WalletAPI.Models.Enums;
+
+namespace WalletAPI.Models.DTOs.User
 {
     public class RegisterDto
     {
@@ -8,6 +10,6 @@
         public string Email { get; set; }
         public string Phone { get; set; }
         public string Password { get; set; }
-        public string Role { get; set; }
+        public UserRole Role { get; set; }
     }
 }
