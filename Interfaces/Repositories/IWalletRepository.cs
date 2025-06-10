@@ -9,6 +9,6 @@ namespace WalletAPI.Interfaces.Repositories
         Task<Wallet?> GetWalletByUserIdAsync(int userId);
         Task<IEnumerable<Wallet>> GetAllAsync();
         Task UpdateAsync(Wallet wallet);
-        Task<bool> DeleteAsync(int id);
+        Task DeleteAsync(int id);
     }
 }

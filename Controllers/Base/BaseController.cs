@@ -23,10 +23,13 @@ namespace WalletAPI.Controllers.Base
 
         protected async Task<ActionResult?> ValidateWalletAccessAsync(int walletId)
         {
-            if (!TryGetLoggedUserId(out var userId)) return Forbid("Invalid user identity");
+            if (!TryGetLoggedUserId(out var userId))
+                return StatusCode(403, "Invalid user identity.");
 
+            Console.WriteLine($"Validando acesso do wallet {walletId} para user {userId}");
             var hasAccess = await _walletService.HasAccessAsync(walletId, userId, User);
-            if (!hasAccess) return Forbid("You do not have access to this wallet.");
+            if (!hasAccess)
+                return StatusCode(403, "You do not have permission to access this wallet.");
 
             return null;
         }
@@ -34,9 +37,10 @@ namespace WalletAPI.Controllers.Base
         protected ActionResult? ValidateUserAccess(int targetUserId)
         {
             if (!TryGetLoggedUserId(out var loggedUserId))
-                return Forbid("Invalid user identity");
+                return StatusCode(403, "Invalid user identity");
+
             if (!_walletService.HasAccessToUser(targetUserId, loggedUserId, User))
-                return Forbid("You do not have permission to access this user.");
+                return StatusCode(403, "You do not have permission to access this wallet.");
 
             return null;
         }

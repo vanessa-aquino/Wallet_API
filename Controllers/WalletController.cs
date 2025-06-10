@@ -15,13 +15,14 @@ namespace WalletAPI.Controllers
     public class WalletController : BaseController
     {
         private readonly IUserRepository _userRepository;
+        private readonly ILogger<WalletController> _logger;
 
-        public WalletController(IWalletService walletService, IUserRepository userRepository)
+        public WalletController(IWalletService walletService, IUserRepository userRepository, ILogger<WalletController> logger)
             : base(walletService)
         {
             _userRepository = userRepository;
+            _logger = logger;
         }
-
 
         [HttpGet("wallet/{id}")]
         public async Task<ActionResult<WalletDto>> GetWalletById(int id)
@@ -40,8 +41,8 @@ namespace WalletAPI.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Unexpected error in GetWalletId.");
                 return StatusCode(500, new { message = $"Internal server error" });
-
             }
         }
 
@@ -69,6 +70,7 @@ namespace WalletAPI.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Unexpected error in CreateWallet.");
                 return StatusCode(500, new { message = $"Internal server error" });
 
             }
@@ -76,7 +78,7 @@ namespace WalletAPI.Controllers
         }
 
         [HttpGet("user/{userId}")]
-        public async Task<ActionResult<WalletDto>> FindWalletByUserId(int userId)
+        public async Task<ActionResult<WalletDto>> GetWalletByUserId(int userId)
         {
             try
             {
@@ -92,6 +94,7 @@ namespace WalletAPI.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Unexpected error in GetWalletByUserId.");
                 return StatusCode(500, new { message = $"Internal server error" });
 
             }
