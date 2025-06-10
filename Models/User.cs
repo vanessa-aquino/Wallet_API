@@ -9,7 +9,6 @@ namespace WalletAPI.Models
 
         [Required] public string FirstName { get; set; } = null!;
         [Required] public string LastName { get; set; } = null!;
-
         [Required]
         [DisplayFormat(DataFormatString = "(0:dd/MM/yyyy)", ApplyFormatInEditMode = true)]
         [DataType(DataType.Date)]
@@ -29,7 +28,6 @@ namespace WalletAPI.Models
         public Wallet? Wallet { get; set; }
         public List<Transaction> Transactions { get; set; } = new List<Transaction>();
         public ICollection<PasswordResetToken> PasswordResetTokens { get; set; } = new List<PasswordResetToken>();
-
 
         public User() { }
 
