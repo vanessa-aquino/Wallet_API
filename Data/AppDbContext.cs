@@ -19,6 +19,10 @@ namespace WalletAPI.Data
                 .HasQueryFilter(u => !u.IsDeleted);
             modelBuilder.Entity<Wallet>()
                 .HasQueryFilter(w => !w.IsDeleted);
+
+            modelBuilder.Entity<User>()
+                .Property(u => u.Role)
+                .HasConversion<string>();
             
             // User -> Wallet (1:1)
             modelBuilder.Entity<User>()

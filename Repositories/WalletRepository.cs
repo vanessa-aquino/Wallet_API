@@ -65,7 +65,8 @@ namespace WalletAPI.Repositories
 
         public async Task DeleteAsync(int id)
         {
-            var wallet = await _context.Wallets.FirstOrDefaultAsync(w => w.Id == id && !w.IsDeleted);
+            var wallet = await _context.Wallets
+                .FirstOrDefaultAsync(w => w.Id == id && !w.IsDeleted);
 
             if (wallet == null)
                 throw new KeyNotFoundException($"Wallet with ID {id} not found.");

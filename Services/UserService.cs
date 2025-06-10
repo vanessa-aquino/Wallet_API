@@ -1,14 +1,15 @@
-﻿using Microsoft.Extensions.Caching.Memory;
+﻿using WalletAPI.Interfaces.Repositories;
+using Microsoft.Extensions.Caching.Memory;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
+using WalletAPI.Interfaces.Services;
+using WalletAPI.Models.DTOs.User;
+using WalletAPI.Models.Enums;
 using System.Security.Claims;
+using WalletAPI.Models.DTOs;
 using WalletAPI.Exceptions;
 using WalletAPI.Models;
 using System.Text;
-using WalletAPI.Models.DTOs.User;
-using WalletAPI.Interfaces.Repositories;
-using WalletAPI.Interfaces.Services;
-using WalletAPI.Models.DTOs;
 
 namespace WalletAPI.Services
 {
@@ -27,15 +28,9 @@ namespace WalletAPI.Services
             _cache = cache;
             _logger = logger;
         }
+
         public async Task UpdateAsync(User user) => await _userRepository.UpdateAsync(user);
         public DateTime GetTokenExpiration() => DateTime.Now.AddDays(1);
-
-        public async Task<User> GetUserById(int id)
-        {
-            var user = await _userRepository.GetByIdAsync(id);
-            return user;
-        }
-
         public string GenerateToken(User user)
         {
             var issuer = _configuration["Jwt:Issuer"];
@@ -46,7 +41,7 @@ namespace WalletAPI.Services
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Name, user.Email),
-                new Claim(ClaimTypes.Role, user.Role)
+                new Claim(ClaimTypes.Role, user.Role.ToString())
             };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
@@ -62,6 +57,12 @@ namespace WalletAPI.Services
                 );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        public async Task<User> GetUserById(int id)
+        {
+            var user = await _userRepository.GetByIdAsync(id);
+            return user;
         }
 
         public async Task<UserDto> AuthenticateAsync(string email, string password)
@@ -149,7 +150,7 @@ namespace WalletAPI.Services
         {
             await ValidateEmailAsync(user.Email);
             user.SetPassword(password);
-            user.Role = user.Email.Contains("admin@email.com") ? "Admin" : "User";
+            user.Role = user.Email.Contains("admin@email.com") ? UserRole.Admin : UserRole.User;
 
             var createdUser = await _userRepository.AddAsync(user);
 

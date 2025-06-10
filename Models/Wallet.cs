@@ -1,4 +1,5 @@
-﻿namespace WalletAPI.Models
+﻿
+namespace WalletAPI.Models
 {
     public class Wallet
     {
@@ -9,7 +10,7 @@
         public bool IsDeleted { get; set; } = false;
         public DateTime? DeletedAt { get; set; }
         public int UserId { get; set; }
-        public User User { get; set; }
+        public User User { get; set; } = null!;
         public List<Transaction> Transactions { get; set; } = new();
 
         public Wallet() { }

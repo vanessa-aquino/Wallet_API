@@ -1,10 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
-using WalletAPI.Models;
-using WalletAPI.Data;
-using WalletAPI.Exceptions;
-using WalletAPI.Interfaces.Repositories;
+﻿using WalletAPI.Interfaces.Repositories;
+using Microsoft.EntityFrameworkCore;
 using WalletAPI.Models.DTOs.User;
 using WalletAPI.Models.DTOs;
+using WalletAPI.Exceptions;
+using WalletAPI.Models;
+using WalletAPI.Data;
 
 namespace WalletAPI.Repositories
 {
@@ -19,134 +19,75 @@ namespace WalletAPI.Repositories
 
         public async Task<User> AddAsync(User user)
         {
-            try
-            {
-                _context.Users.Add(user);
-                await _context.SaveChangesAsync();
-                return user;
-            }
-            catch (DbUpdateException dbEx)
-            {
-                throw new InvalidOperationException("An error occurred while adding the user to the database.", dbEx);
-            }
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+            return user;
         }
 
         public async Task<User> GetByIdAsync(int id)
         {
-            try
-            {
-                var user = await _context.Users
-                     .Include(u => u.Wallet)
-                     .FirstOrDefaultAsync(u => u.Id == id);
+            var user = await _context.Users
+                 .Include(u => u.Wallet)
+                 .FirstOrDefaultAsync(u => u.Id == id);
 
-                if (user == null)
-                {
-                    throw new UserNotFoundException(id);
-                }
+            if (user == null)
+                throw new UserNotFoundException(id);
 
-                return user;
-            }
-            catch (KeyNotFoundException knfEx)
-            {
-                throw new KeyNotFoundException("User not found", knfEx);
-            }
-            catch (Exception ex)
-            {
-                throw new InvalidOperationException("An error occurred while fetching the user.", ex);
-            }
+            return user;
         }
 
         public async Task<User?> GetByEmailAsync(string email)
         {
-            try
-            {
-                return await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
-            }
-            catch (Exception ex)
-            {
-                throw new InvalidOperationException("An error occurred while fetching the user by email.", ex);
-            }
+            return await _context.Users
+                .FirstOrDefaultAsync(u => u.Email == email);
         }
 
         public async Task<IEnumerable<User>> GetAllAsync()
         {
-            try
-            {
-                return await _context.Users.Include(u => u.Wallet).AsNoTracking().ToListAsync();
-            }
-            catch (Exception ex)
-            {
-                throw new InvalidOperationException("An error occurred while fetching the user.", ex);
-            }
+            return await _context.Users
+                .Include(u => u.Wallet)
+                .AsNoTracking()
+                .ToListAsync();
         }
 
         public async Task UpdateAsync(User user)
         {
-            try
-            {
-                var existingUser = await _context.Users
-                    .FirstOrDefaultAsync(u => u.Id == user.Id);
+            var existingUser = await _context.Users
+                .FirstOrDefaultAsync(u => u.Id == user.Id);
 
-                if (existingUser == null)
-                    throw new UserNotFoundException(user.Id);
+            if (existingUser == null)
+                throw new UserNotFoundException(user.Id);
 
-                if (string.IsNullOrWhiteSpace(user.FirstName) || string.IsNullOrWhiteSpace(user.Email))
-                    throw new ArgumentException("User data is incomplete or invalid");
+            if (string.IsNullOrWhiteSpace(user.FirstName) || string.IsNullOrWhiteSpace(user.Email))
+                throw new ArgumentException("User data is incomplete or invalid");
 
-                _context.Users.Update(user);
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException dbEx)
-            {
-                throw new KeyNotFoundException($"User with id {user.Id} not found", dbEx);
-            }
-            catch (DbUpdateException dbEx)
-            {
-                throw new InvalidOperationException("An error occurred while updating the user.", dbEx);
-            }
-            catch (Exception ex)
-            {
-                throw new InvalidOperationException("An unexpected error occurred.", ex);
-            }
+            _context.Users.Update(user);
+            await _context.SaveChangesAsync();
         }
 
         public async Task<bool> DeleteAsync(int id)
         {
-            try
-            {
-                var user = await _context.Users
-                    .Include(u => u.Wallet)
-                    .FirstOrDefaultAsync(u => u.Id == id && !u.IsDeleted);
-                if (user == null)
-                    throw new UserNotFoundException(id);
+            var user = await _context.Users
+                .Include(u => u.Wallet)
+                .FirstOrDefaultAsync(u => u.Id == id && !u.IsDeleted);
 
-                user.IsDeleted = true;
-                user.DeletedAt = DateTime.Now;
+            if (user == null)
+                throw new UserNotFoundException(id);
 
-                if(user.Wallet != null)
-                {
-                    user.Wallet.IsDeleted = true;
-                    user.Wallet.DeletedAt = DateTime.Now;
-                    user.Wallet.Active = false;
-                }
+            user.IsDeleted = true;
+            user.DeletedAt = DateTime.Now;
 
-                _context.Users.Update(user);
+            if (user.Wallet != null)
+            {
+                user.Wallet.IsDeleted = true;
+                user.Wallet.DeletedAt = DateTime.Now;
+                user.Wallet.Active = false;
+            }
 
-                await _context.SaveChangesAsync();
-                return true;
-            }
-            catch (KeyNotFoundException knfEx)
-            {
-                throw new KeyNotFoundException("User not found", knfEx);
-            }
-            catch (DbUpdateException dbEx)
-            {
-                throw new InvalidOperationException("An error occurred while deleting the user.", dbEx);
-            }
-            catch (Exception ex)
-            {
-                throw new InvalidOperationException("An unexpected error occurred.", ex);
-            }
+            _context.Users.Update(user);
+
+            await _context.SaveChangesAsync();
+            return true;
         }
 
         public async Task<PagedResultDto<UserProfileDto>> PaginationAsync(UserQueryParams dto)

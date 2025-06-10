@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using WalletAPI.Models.Enums;
 
 namespace WalletAPI.Models.DTOs.User
 {
@@ -10,6 +11,6 @@ namespace WalletAPI.Models.DTOs.User
         public string Email { get; set; }
         public string Phone { get; set; }
         public string Token { get; set; }
-        public string Role { get; set; }
+        public UserRole Role { get; set; }
     }
 }

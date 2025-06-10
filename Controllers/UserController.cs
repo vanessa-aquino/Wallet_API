@@ -7,6 +7,7 @@ using WalletAPI.Exceptions;
 using WalletAPI.Models;
 using WalletAPI.Interfaces.Services;
 using WalletAPI.Models.DTOs;
+using WalletAPI.Models.Enums;
 
 namespace WalletAPI.Controllers
 {
@@ -103,12 +104,11 @@ namespace WalletAPI.Controllers
         }
 
         [HttpPut("change-password")]
-        public async Task<IActionResult> ChangePasswordAsync(int userId, [FromBody] ChangePasswordDto dto)
+        public async Task<IActionResult> ChangePasswordAsync([FromBody] ChangePasswordDto dto)
         {
             try
             {
-                userId = _userContextService.GetUserId();
-
+                var userId = _userContextService.GetUserId();
                 var accesValidation = ValidateUserAccess(userId);
                 if (accesValidation != null) return accesValidation;
 
@@ -130,7 +130,7 @@ namespace WalletAPI.Controllers
             }
         }
 
-        [HttpPut("update-profile")]
+        [HttpPut($"update-profile")]
         public async Task<ActionResult> UpdateUser([FromBody] UpdateProfileDto dto)
         {
             try
@@ -163,10 +163,11 @@ namespace WalletAPI.Controllers
         }
 
         [HttpGet("account-age")]
-        public async Task<ActionResult<TimeSpan>> GetAccountAge(int userId)
+        public async Task<ActionResult<TimeSpan>> GetAccountAge()
         {
             try
             {
+                var userId = _userContextService.GetUserId();
                 var accessValidation = ValidateUserAccess(userId);
                 if (accessValidation != null) return accessValidation;
 
@@ -184,10 +185,11 @@ namespace WalletAPI.Controllers
         }
 
         [HttpDelete("{userId}")]
-        public async Task<ActionResult> DeleteUser(int userId)
+        public async Task<ActionResult> DeleteUser()
         {
             try
             {
+                var userId = _userContextService.GetUserId();
                 var accessValidation = ValidateUserAccess(userId);
                 if (accessValidation != null) return accessValidation;
 
@@ -196,7 +198,7 @@ namespace WalletAPI.Controllers
             }
             catch (UserNotFoundException)
             {
-                return NotFound($"User with ID {userId} not found.");
+                return NotFound($"User not found.");
             }
             catch (Exception)
             {
@@ -204,9 +206,9 @@ namespace WalletAPI.Controllers
             }
         }
 
-        [HttpPut("{userId}/activate")]
-        [Authorize(Roles = "Admin")]
-        public async Task<ActionResult> ActivatedUser(int userId)
+        [HttpPut("admin/{userId}/activate")]
+        [Authorize(Roles = nameof(UserRole.Admin))]
+        public async Task<ActionResult> ActivateUser(int userId)
         {
             try
             {
@@ -223,9 +225,9 @@ namespace WalletAPI.Controllers
             }
         }
 
-        [HttpPut("{userId}/deactive")]
-        [Authorize(Roles = "Admin")]
-        public async Task<ActionResult> DeactivatedUser(int userId)
+        [HttpPut("admin/{userId}/deactive")]
+        [Authorize(Roles = nameof(UserRole.Admin))]
+        public async Task<ActionResult> DeactivateUser(int userId)
         {
             try
             {
@@ -242,9 +244,9 @@ namespace WalletAPI.Controllers
             }
         }
 
-        [HttpGet("{id}")]
-        [Authorize(Roles = "Admin")]
-        public async Task<ActionResult> GetUserOnlyAdmin(int id)
+        [HttpGet("admin/{id}")]
+        [Authorize(Roles = nameof(UserRole.Admin))]
+        public async Task<ActionResult> GetByIdForAdmin(int id)
         {
             try
             {
@@ -274,8 +276,8 @@ namespace WalletAPI.Controllers
             }
         }
 
-        [HttpGet("user-list")]
-        [Authorize(Roles = "Admin")]
+        [HttpGet("admin/user-list")]
+        [Authorize(Roles = nameof(UserRole.Admin))]
         public async Task<ActionResult<PagedResultDto<UserProfileDto>>> GetAllUsers([FromQuery] UserQueryParams queryParams)
         {
             try
@@ -287,6 +289,34 @@ namespace WalletAPI.Controllers
             catch (Exception)
             {
                 return StatusCode(500, new { message = "Internal server error" });
+            }
+        }
+
+        [HttpPut("admin/user/{userId}/update-profile")]
+        [Authorize(Roles = nameof(UserRole.Admin))]
+        public async Task<ActionResult> AdminUpdateUserProfile(int userId, [FromBody] UpdateProfileDto dto)
+        {
+            try
+            {
+                var updateProfile = await _userService.UpdateProfileAsync(userId, dto);
+                return Ok(updateProfile);
+            }
+            catch (EmailAlreadyInUseException ex)
+            {
+                return Conflict(new { message = ex.Message });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { message = $"Internal server error" });
+
             }
         }
     }
