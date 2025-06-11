@@ -1,8 +1,11 @@
-﻿namespace WalletAPI.Models.Enums
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace WalletAPI.Models.Enums
 {
     public enum UserRole
     {
-        User,
-        Admin
+
+        [Display(Name = "Usuario")] User,
+        [Display(Name = "Admin")] Admin
     }
 }

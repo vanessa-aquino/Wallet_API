@@ -1,10 +1,13 @@
-﻿namespace WalletAPI.Models.Enums
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace WalletAPI.Models.Enums
 {
     public enum TransactionType
     {
-        Deposit,
-        Withdraw,
-        Transfer,
-        Refund
+
+        [Display(Name = "Deposito")] Deposit,
+        [Display(Name = "Saque")] Withdraw,
+        [Display(Name = "Transaferencia")] Transfer,
+        [Display(Name = "Reembolso")] Refund
     }
 }

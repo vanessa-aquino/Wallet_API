@@ -5,6 +5,7 @@ using WalletAPI.Models.Enums;
 using WalletAPI.Models.DTOs;
 using WalletAPI.Models;
 using WalletAPI.Data;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace WalletAPI.Repositories
 {
@@ -168,5 +169,8 @@ namespace WalletAPI.Repositories
                 TotalPages = (int)Math.Ceiling(totalItems / (double)dto.PageSize)
             };
         }
+    
+        public async Task<IDbContextTransaction> BeginTransactionAsync() => await _context.Database.BeginTransactionAsync();
+        public async Task SaveChangesAsync() => await _context.SaveChangesAsync();
     }
 }

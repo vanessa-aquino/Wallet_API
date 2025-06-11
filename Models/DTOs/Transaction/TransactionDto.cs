@@ -11,5 +11,6 @@ namespace WalletAPI.Models.DTOs.Transaction
         public string? Description { get; set; }
         public DateTime Date {  get; set; }
         public string WalletName { get; set; } = null!;
+        public string? DestinationWalletName { get; set; }
     }
 }

@@ -1,4 +1,5 @@
-﻿using WalletAPI.Models;
+﻿using Microsoft.AspNetCore.Mvc;
+using WalletAPI.Models;
 using WalletAPI.Models.DTOs;
 using WalletAPI.Models.DTOs.Transaction;
 using WalletAPI.Models.Enums;
@@ -20,8 +21,7 @@ namespace WalletAPI.Interfaces.Services
         Task<TransactionDto> GetByIdAsync(int id);
 
         // validacao e utilidades
-        Task ValidateTransactionAsync(Transaction transaction);
+        Task<FileContentResult> GenerateTransactionReportAsync(int walletId, DateTime? startDate = null, DateTime? endDate = null);
         Task ValidateFundsAsync(int walletId, decimal amount);
-        decimal CalculateTransactionFeesAsync(decimal amount, TransactionType transactionType);
     }
 }

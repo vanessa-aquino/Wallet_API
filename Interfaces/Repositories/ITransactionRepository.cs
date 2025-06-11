@@ -2,6 +2,7 @@
 using WalletAPI.Models.Enums;
 using WalletAPI.Models.DTOs;
 using WalletAPI.Models;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace WalletAPI.Interfaces.Repositories
 {
@@ -21,5 +22,7 @@ namespace WalletAPI.Interfaces.Repositories
             TransactionType? type = null
         );
         Task<PagedResultDto<TransactionDto>> GetPaginationAsync(TransactionQueryParams dto);
+        Task<IDbContextTransaction> BeginTransactionAsync();
+        Task SaveChangesAsync();
     }
 }

@@ -9,6 +9,10 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using WalletAPI.Interfaces.Repositories;
 using WalletAPI.Interfaces.Services;
+using WalletAPI.Validators;
+using WalletAPI.Helpers;
+using System.Text.Json.Serialization;
+using WalletAPI.Models.Enums;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -56,6 +60,9 @@ builder.Services.AddScoped<ITransactionService, TransactionService>();
 builder.Services.AddScoped<IUserContextService, UserContextService>();
 builder.Services.AddScoped<IPasswordResetRepository, PasswordResetRepository>();
 builder.Services.AddScoped<IPasswordResetService, PasswordResetService>();
+builder.Services.AddScoped<TransactionValidator>();
+builder.Services.AddScoped<TransactionFeeCalculator>();
+builder.Services.AddScoped<TransactionReportGenerator>();
 
 var cultureInfo = new CultureInfo("pt-BR");
 CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
@@ -77,7 +84,16 @@ builder.Services.Configure<RequestLocalizationOptions>(options =>
 });
 
 builder.Services.AddMemoryCache();
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+        options.JsonSerializerOptions.Converters.Add(new Decimal2PlacesConverter());
+        options.JsonSerializerOptions.Converters.Add(new DateTimeConverter());
+        options.JsonSerializerOptions.Converters.Add(new DisplayNameEnumConverter<TransactionStatus>());
+        options.JsonSerializerOptions.Converters.Add(new DisplayNameEnumConverter<TransactionType>());
+        options.JsonSerializerOptions.Converters.Add(new DisplayNameEnumConverter<UserRole>());
+    });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
