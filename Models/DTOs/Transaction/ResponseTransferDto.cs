@@ -2,7 +2,7 @@
 
 namespace WalletAPI.Models.DTOs.Transaction
 {
-    public class ResponseDepositAndWithdrawDto
+    public class ResponseTransferDto
     {
         public TransactionType TransactionType { get; set; }
         public DateTime Date { get; set; }
@@ -18,6 +18,7 @@ namespace WalletAPI.Models.DTOs.Transaction
                 : value;
         }
 
-        public string WalletName { get; set; } = null!;
+        public string SourceWalletOwnerName { get; set; } = null!;
+        public string DestinationWalletOwnerName { get; set; } = null!;
     }
 }

@@ -15,6 +15,7 @@ namespace WalletAPI.Models
 
         public DateTime Date { get; set; }
         public TransactionStatus Status { get; set; }
+
         [MaxLength(100)] public string? Description { get; set; }
 
         [Required]

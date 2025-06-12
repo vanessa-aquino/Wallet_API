@@ -10,9 +10,9 @@ namespace WalletAPI.Interfaces.Services
     {
         // Criacao e manipulacao de transacoes
         Task<Transaction> CreateTransactionAsync(Transaction transaction);
-        Task<Transaction> DepositAsync(WithdrawAndDepositTransactionDto dto);
-        Task<Transaction> WithdrawAsync(WithdrawAndDepositTransactionDto dto);
-        Task<Transaction> TransferAsync(TransferTransactionDto dto);
+        Task<Transaction> DepositAsync(WithdrawAndDepositTransactionDto dto, int loggedUserId);
+        Task<Transaction> WithdrawAsync(WithdrawAndDepositTransactionDto dto, int loggedUserId);
+        Task<Transaction> TransferAsync(TransferTransactionDto dto, int loggedUserId);
         Task RevertTransactionAsync(int transactionId);
         
         // Consultas e relatorios

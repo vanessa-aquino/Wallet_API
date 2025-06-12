@@ -172,5 +172,15 @@ namespace WalletAPI.Repositories
     
         public async Task<IDbContextTransaction> BeginTransactionAsync() => await _context.Database.BeginTransactionAsync();
         public async Task SaveChangesAsync() => await _context.SaveChangesAsync();
+
+        public async Task<Transaction> GetByIdWithIncludesAsync(int id)
+        {
+            return await _context.Transactions
+                .Include(t => t.User)
+                .Include(t => t.DestinationWallet)
+                    .ThenInclude(w => w.User)
+                .FirstOrDefaultAsync(t => t.Id == id)
+                ?? throw new KeyNotFoundException($"Transaction with id {id} not found.");
+        }
     }
 }

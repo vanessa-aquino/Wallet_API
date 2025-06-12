@@ -24,6 +24,4 @@ namespace WalletAPI.Models
         public void Activate() => Active = true;
         public void Deactivate() => Active = false;
     }
-
-
 }

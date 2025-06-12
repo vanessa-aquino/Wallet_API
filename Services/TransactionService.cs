@@ -41,7 +41,7 @@ namespace WalletAPI.Services
             {
                 TransactionType.Deposit => TransactionStatus.Completed,
                 TransactionType.Withdraw => TransactionStatus.Completed,
-                TransactionType.Transfer => TransactionStatus.Pending,
+                TransactionType.Transfer => TransactionStatus.Completed,
                 TransactionType.Refund => TransactionStatus.Processing,
                 _ => throw new InvalidTransactionException()
             };
@@ -99,6 +99,8 @@ namespace WalletAPI.Services
                 transaction.Status = DetermineInitialStatus(transaction.TransactionType);
 
                 await _transactionRepository.AddAsync(transaction);
+                await _transactionRepository.SaveChangesAsync();
+
                 _logger.LogInformation("Transaction created successfully.");
                 return transaction;
             }
@@ -108,6 +110,7 @@ namespace WalletAPI.Services
                 throw;
             }
         }
+
         public async Task<TransactionDto> GetByIdAsync(int id)
         {
             var transaction = await _transactionRepository.GetByIdAsync(id);
@@ -148,15 +151,17 @@ namespace WalletAPI.Services
         }
 
         // TRANSAÇÕES
-        public async Task<Transaction> DepositAsync(WithdrawAndDepositTransactionDto dto)
+        public async Task<Transaction> DepositAsync(WithdrawAndDepositTransactionDto dto, int loggedUserId)
         {
             _logger.LogInformation("Starting deposit.");
 
             var wallet = await _walletRepository.GetByIdAsync(dto.WalletId);
+            if (wallet.UserId != dto.UserId)
+                throw new UnauthorizedTransactionException(dto.UserId, wallet.Id);
 
             var transaction = new Transaction()
             {
-                UserId = dto.UserId,
+                UserId = loggedUserId,
                 Amount = dto.Amount,
                 TransactionType = TransactionType.Deposit,
                 WalletId = dto.WalletId,
@@ -173,7 +178,7 @@ namespace WalletAPI.Services
             return createdTransaction;
         }
 
-        public async Task<Transaction> TransferAsync(TransferTransactionDto dto)
+        public async Task<Transaction> TransferAsync(TransferTransactionDto dto, int loggedUserId)
         {
             using var transaction = await _transactionRepository.BeginTransactionAsync();
 
@@ -181,8 +186,10 @@ namespace WalletAPI.Services
 
             try
             {
+
                 var sourceWallet = await _walletRepository.GetByIdAsync(dto.SourceWalletId);
                 if (sourceWallet == null) throw new InvalidTransactionException();
+                if (sourceWallet.UserId != loggedUserId) throw new UnauthorizedTransactionException(dto.UserId, sourceWallet.Id);
 
                 var destinationWallet = await _walletRepository.GetByIdAsync(dto.DestinationWalletId);
                 if (destinationWallet == null) throw new InvalidTransactionException();
@@ -191,12 +198,14 @@ namespace WalletAPI.Services
 
                 var newTransaction = new Transaction()
                 {
+                    UserId = loggedUserId,
                     Amount = dto.Amount,
                     TransactionType = TransactionType.Transfer,
                     WalletId = dto.SourceWalletId,
                     Description = dto.Description,
                     Date = DateTime.Now,
-                    Status = DetermineInitialStatus(TransactionType.Transfer)
+                    Status = DetermineInitialStatus(TransactionType.Transfer),
+                    DestinationWalletId = dto.DestinationWalletId
                 };
 
                 var fee = _transactionFeeCalculator.CalculateTransactionFees(dto.Amount, TransactionType.Transfer);
@@ -212,8 +221,10 @@ namespace WalletAPI.Services
                 await _transactionRepository.SaveChangesAsync();
                 await transaction.CommitAsync();
 
+                var fullTransaction = await _transactionRepository.GetByIdWithIncludesAsync(createdTransaction.Id);
+
                 _logger.LogInformation($"Transfer completed from wallet {dto.SourceWalletId} to {dto.DestinationWalletId}.");
-                return createdTransaction;
+                return fullTransaction;
             }
             catch (Exception)
             {
@@ -222,12 +233,17 @@ namespace WalletAPI.Services
             }
         }
 
-        public async Task<Transaction> WithdrawAsync(WithdrawAndDepositTransactionDto dto)
+        public async Task<Transaction> WithdrawAsync(WithdrawAndDepositTransactionDto dto, int loggedUserId)
         {
             _logger.LogInformation("Starting withdrawal.");
 
+            var wallet = await _walletRepository.GetByIdAsync(dto.WalletId);
+            if (wallet.UserId != dto.UserId)
+                throw new UnauthorizedTransactionException(dto.UserId, wallet.Id);
+
             var transaction = new Transaction()
             {
+                UserId = loggedUserId,
                 Amount = dto.Amount,
                 TransactionType = TransactionType.Withdraw,
                 WalletId = dto.WalletId,
@@ -235,7 +251,7 @@ namespace WalletAPI.Services
                 Date = DateTime.Now
             };
 
-            var isFirstWithdraw = await _transactionRepository.IsFirstWithdrawOfMonthAsync(dto.WalletId);
+            var isFirstWithdraw = await _transactionRepository.IsFirstWithdrawOfMonthAsync(loggedUserId);
             if (!isFirstWithdraw)
             {
                 var fee = _transactionFeeCalculator.CalculateTransactionFees(dto.Amount, TransactionType.Withdraw);
@@ -243,9 +259,13 @@ namespace WalletAPI.Services
                 _logger.LogInformation($"Withdrawal fee applied: {fee}.");
             }
 
+
+            if (wallet.Balance < transaction.Amount)
+                throw new InsufficientFundsException();
+
             var createdTransaction = await CreateTransactionAsync(transaction);
 
-            var wallet = await _walletRepository.GetByIdAsync(dto.WalletId);
+            wallet = await _walletRepository.GetByIdAsync(dto.WalletId);
             wallet.Balance -= transaction.Amount;
             await _walletRepository.UpdateAsync(wallet);
 
