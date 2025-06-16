@@ -7,6 +7,7 @@ using WalletAPI.Models;
 using WalletAPI.Controllers.Base;
 using WalletAPI.Exceptions;
 using WalletAPI.Models.Enums;
+using System.Diagnostics;
 
 namespace WalletAPI.Controllers
 {
@@ -32,7 +33,7 @@ namespace WalletAPI.Controllers
                 var transaction = await _transactionService.GetByIdAsync(id);
                 return Ok(transaction);
             }
-            catch(KeyNotFoundException)
+            catch (KeyNotFoundException)
             {
                 return NotFound("Transaction not found.");
             }
@@ -115,7 +116,7 @@ namespace WalletAPI.Controllers
             }
             catch (InsufficientFundsException ex)
             {
-                return BadRequest(new {message = ex.Message});
+                return BadRequest(new { message = ex.Message });
             }
             catch (UnauthorizedTransactionException)
             {
@@ -151,7 +152,7 @@ namespace WalletAPI.Controllers
                     Status = transaction.Status,
                     SourceWalletOwnerName = $"{transaction.User?.FirstName} {transaction.User?.LastName}",
                     DestinationWalletOwnerName = $"{transaction.DestinationWallet?.User?.FirstName ?? ""} {transaction.DestinationWallet?.User?.LastName ?? ""} ",
-                    Description = transaction.Description 
+                    Description = transaction.Description
                 };
 
                 return CreatedAtAction(nameof(GetById), new { id = transaction.Id }, responseDto);
@@ -192,7 +193,7 @@ namespace WalletAPI.Controllers
                 var transactionList = await _transactionService.GetTransactionHistoryAsync(dto);
                 return Ok(transactionList);
             }
-            catch(ArgumentException)
+            catch (ArgumentException)
             {
                 return BadRequest("WalletId is required.");
             }
@@ -208,7 +209,7 @@ namespace WalletAPI.Controllers
         {
             try
             {
-                if(dto.WalletId <= 0)
+                if (dto.WalletId <= 0)
                 {
                     var allTransactions = await _transactionService.GetAllAsync();
                     return Ok(allTransactions);
@@ -227,29 +228,28 @@ namespace WalletAPI.Controllers
             }
         }
 
-        //[HttpGet("{id}")]
-        //public async Task<ActionResult<TransactionDto>> GetTransactionById(int id)
-        //{
-        //    try
-        //    {
-        //        var transaction = await _transactionService.GetByIdAsync(id);
-        //        return Ok(transaction);
-        //    }
-        //    catch (KeyNotFoundException)
-        //    {
-        //        return NotFound($"Transactions with ID {id} not found.");
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return StatusCode(500, $"Internal server error: {ex.Message}");
-        //    }
-        //}
-
-
-
-
-
-
+        [HttpPost("revert/{transactionId}")]
+        [Authorize(Roles = nameof(UserRole.Admin))]
+        public async Task<IActionResult> RevertTransactions(int transactionId)
+        {
+            try
+            {
+                await _transactionService.RevertTransactionAsync(transactionId);
+                return NoContent();
+            }
+            catch(NotFoundException)
+            {
+                return NotFound(transactionId);
+            }
+            catch(TransactionCannotBeReversedException)
+            {
+                return Conflict("This transaction cannot be reversed");
+            }
+            catch(Exception)
+            {
+                return StatusCode(500, new {message = "Internal server error."});
+            }
+        }
     }
 }
 

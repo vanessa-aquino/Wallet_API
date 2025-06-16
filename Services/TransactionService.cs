@@ -318,6 +318,8 @@ namespace WalletAPI.Services
                 };
 
                 var wallet = await _walletRepository.GetByIdAsync(transaction.WalletId);
+                if (wallet == null)
+                    throw new NotFoundException(transaction.WalletId);
 
                 switch (transaction.TransactionType)
                 {
@@ -337,8 +339,6 @@ namespace WalletAPI.Services
 
                 await _transactionRepository.AddAsync(reversalTransaction);
                 transaction.Status = TransactionStatus.Canceled;
-                await _transactionRepository.UpdateAsync(transaction);
-                await _walletRepository.UpdateAsync(wallet);
 
                 await _transactionRepository.SaveChangesAsync();
                 await dbTransaction.CommitAsync();
