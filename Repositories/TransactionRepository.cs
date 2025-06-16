@@ -28,8 +28,11 @@ namespace WalletAPI.Repositories
         public async Task<Transaction> GetByIdAsync(int id)
         {
             var transaction = await _context.Transactions
-                .Include(t => t.Wallet)
+                .AsNoTracking()
                 .Include(t => t.User)
+                .Include(t => t.Wallet)
+                .Include(t => t.DestinationWallet)
+                .ThenInclude(dw => dw.User)
                 .SingleOrDefaultAsync(t => t.Id == id);
 
             if (transaction == null)
@@ -105,11 +108,15 @@ namespace WalletAPI.Repositories
                 .Where(t => t.WalletId == walletId);
 
             if (startDate.HasValue)
-                query = query.Where(t => t.Date >= startDate.Value);
+            {
+                query = query.Where(t => t.Date >= startDate.Value.Date);
+            }
 
             if (endDate.HasValue)
-                query = query.Where(t => t.Date <= endDate.Value);
-
+            {
+                var end = endDate.Value.Date.AddDays(1).AddTicks(-1);
+                query = query.Where(t => t.Date <= end);
+            }
             if (status.HasValue)
                 query = query.Where(t => t.Status == status.Value);
 
@@ -132,10 +139,10 @@ namespace WalletAPI.Repositories
             if (dto.StartDate.HasValue)
                 query = query.Where(t => t.Date >= dto.StartDate.Value);
 
-            if(dto.EndDate.HasValue)
+            if (dto.EndDate.HasValue)
                 query = query.Where(t => t.Date <= dto.EndDate.Value);
 
-            if(dto.Status.HasValue)
+            if (dto.Status.HasValue)
                 query = query.Where(t => t.Status == dto.Status.Value);
 
             if (dto.Type.HasValue)
@@ -145,7 +152,7 @@ namespace WalletAPI.Repositories
 
             var transactions = await query
                 .OrderByDescending(t => t.Date)
-                .Skip((dto.Page -1) * dto.PageSize)
+                .Skip((dto.Page - 1) * dto.PageSize)
                 .Take(dto.PageSize)
                 .ToListAsync();
 
@@ -169,7 +176,7 @@ namespace WalletAPI.Repositories
                 TotalPages = (int)Math.Ceiling(totalItems / (double)dto.PageSize)
             };
         }
-    
+
         public async Task<IDbContextTransaction> BeginTransactionAsync() => await _context.Database.BeginTransactionAsync();
         public async Task SaveChangesAsync() => await _context.SaveChangesAsync();
 

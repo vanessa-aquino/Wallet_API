@@ -32,7 +32,7 @@ namespace WalletAPI.Controllers
                 var transaction = await _transactionService.GetByIdAsync(id);
                 return Ok(transaction);
             }
-            catch (NotFoundException)
+            catch(KeyNotFoundException)
             {
                 return NotFound("Transaction not found.");
             }
@@ -178,7 +178,27 @@ namespace WalletAPI.Controllers
             }
         }
 
+        [HttpGet("history")]
+        public async Task<IActionResult> TransactionHistory([FromQuery] TransactionFilterDto dto)
+        {
+            try
+            {
+                var accessValidation = await ValidateWalletAccessAsync(dto.WalletId);
+                if (accessValidation != null) return accessValidation;
 
+                var transactionList = await _transactionService.GetTransactionHistoryAsync(dto);
+                return Ok(transactionList);
+            }
+            catch(ArgumentException)
+            {
+                return BadRequest("WalletId is required.");
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { message = "Internal server error." });
+            }
+        }
+        
 
 
 

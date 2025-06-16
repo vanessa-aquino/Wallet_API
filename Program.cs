@@ -13,6 +13,7 @@ using WalletAPI.Validators;
 using WalletAPI.Helpers;
 using System.Text.Json.Serialization;
 using WalletAPI.Models.Enums;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -97,30 +98,36 @@ builder.Services.AddControllers()
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
-        Type = Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey,
+        Type = SecuritySchemeType.ApiKey,
         Scheme = "Bearer",
         BearerFormat = "JWT",
-        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        In = ParameterLocation.Header,
         Description = "Type 'Bearer ' followed by the JWT token."
     });
 
-    c.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
-            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            new OpenApiSecurityScheme
             {
-                Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                Reference = new OpenApiReference
                 {
-                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                    Type = ReferenceType.SecurityScheme,
                     Id = "Bearer"
                 }
             },
             new string[] {}
         }
     });
+
+    c.UseAllOfToExtendReferenceSchemas();
+    c.MapType<TransactionStatus>(() => new OpenApiSchema { Type = "integer", Format = "int32" });
+    c.MapType<TransactionType>(() => new OpenApiSchema { Type = "integer", Format = "int32" });
+    c.MapType<UserRole>(() => new OpenApiSchema { Type = "integer", Format = "int32" });
+
 });
 
 var app = builder.Build();
@@ -139,3 +146,4 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+

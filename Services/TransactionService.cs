@@ -58,7 +58,7 @@ namespace WalletAPI.Services
                 Status = transaction.Status,
                 Description = transaction.Description,
                 WalletName = $"{transaction.User.FirstName} {transaction.User.LastName}",
-                DestinationWalletName = $"{transaction.DestinationWallet.User.FirstName} {transaction.DestinationWallet.User.LastName}"
+                DestinationWalletName = $"{transaction.DestinationWallet?.User?.FirstName ?? ""} {transaction.DestinationWallet?.User?.LastName ?? ""}"
             };
         }
 
@@ -115,24 +115,42 @@ namespace WalletAPI.Services
         {
             var transaction = await _transactionRepository.GetByIdAsync(id);
             if (transaction == null)
-                throw new NotFoundException(id);
+                throw new KeyNotFoundException();
 
             return MapToDto(transaction);
         }
 
-        public async Task<IEnumerable<Transaction>> GetTransactionHistoryAsync(TransactionFilterDto filterDto)
+        public async Task<IEnumerable<TransactionResponseDto>> GetTransactionHistoryAsync(TransactionFilterDto filterDto)
         {
             if (filterDto.WalletId <= 0)
                 throw new ArgumentException("WalletId is required.");
 
-            return await _transactionRepository.GetFilteredAsync(
+            var transactions = await _transactionRepository.GetFilteredAsync(
                 filterDto.WalletId,
                 filterDto.StartDate,
                 filterDto.EndDate,
                 filterDto.Status,
                 filterDto.TransactionType
             );
+
+            return transactions.Select(t => new TransactionResponseDto
+            {
+                Id = t.Id,
+                Amount = t.Amount,
+                TransactionType = t.TransactionType,
+                Date = t.Date,
+                Status = t.Status,
+                Description = t.Description,
+                WalletId = t.WalletId,
+                User = new SimpleUserDto
+                {
+                    Id = t.User.Id,
+                    FullName = $"{t.User.FirstName} {t.User.LastName}"
+                }
+
+            });
         }
+
         public async Task ValidateFundsAsync(int walletId, decimal amount)
         {
             var wallet = await _walletRepository.GetByIdAsync(walletId);
