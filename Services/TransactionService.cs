@@ -62,9 +62,14 @@ namespace WalletAPI.Services
             };
         }
 
-        public async Task<int> GetTotalTransactionsAsync(int walletId) => await _transactionRepository.CountByWalletIdAsync(walletId);
+        public async Task<int> GetTotalTransactionsAsync(int walletId)
+        {
+            if (walletId <= 0)
+                throw new WalletNotFoundException(walletId);
 
-        public async Task<FileContentResult> GenerateTransactionReportAsync(int walletId, DateTime? startDate = null, DateTime? endDate = null)
+            return await _transactionRepository.CountByWalletIdAsync(walletId);
+        }
+        public async Task<byte[]> GenerateTransactionReportAsync(int walletId, DateTime? startDate = null, DateTime? endDate = null)
         {
             if (!startDate.HasValue) startDate = new DateTime(DateTime.Now.Year, 1, 1);
             if (!endDate.HasValue) endDate = DateTime.Now;
@@ -75,12 +80,8 @@ namespace WalletAPI.Services
             var transactions = await _transactionRepository.GetFilteredAsync(walletId, startDate, endDate);
             var csvBytes = _transactionReportGenerator.GenerateCsvReport(transactions);
 
-            var fileName = $"Relatorio_transacoes_{walletId}_{DateTime.Now:ddMMyyyy}.csv";
+            return csvBytes;
 
-            return new FileContentResult(csvBytes, "text/csv")
-            {
-                FileDownloadName = fileName
-            };
         }
 
         public async Task<Transaction> CreateTransactionAsync(Transaction transaction)

@@ -179,6 +179,29 @@ namespace WalletAPI.Controllers
             }
         }
 
+
+        [HttpGet("report")]
+        public async Task<IActionResult> TransactionReport([FromQuery] int walletId, DateTime? startDate = null, DateTime? endDate = null)
+        {
+            try
+            {
+                var accessValidation = await ValidateWalletAccessAsync(walletId);
+                if (accessValidation != null) return Forbid();
+
+                var csvByte = await _transactionService.GenerateTransactionReportAsync(walletId, startDate, endDate);
+                var fileName = $"Relatorio_transacoes_{walletId}_{DateTime.Now:ddMMyyyy}.csv";
+                return File(csvByte, "text/csv", fileName);
+            }
+            catch (WalletNotFoundException)
+            {
+                return NotFound("Wallet not found.");
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, "Internal server error.");
+            }
+        }
+
         [HttpGet("history")]
         public async Task<IActionResult> TransactionHistory([FromQuery] TransactionFilterDto dto)
         {
@@ -237,17 +260,36 @@ namespace WalletAPI.Controllers
                 await _transactionService.RevertTransactionAsync(transactionId);
                 return NoContent();
             }
-            catch(NotFoundException)
+            catch (NotFoundException)
             {
                 return NotFound(transactionId);
             }
-            catch(TransactionCannotBeReversedException)
+            catch (TransactionCannotBeReversedException)
             {
                 return Conflict("This transaction cannot be reversed");
             }
-            catch(Exception)
+            catch (Exception)
             {
-                return StatusCode(500, new {message = "Internal server error."});
+                return StatusCode(500, new { message = "Internal server error." });
+            }
+        }
+
+        [HttpGet("total/{walletId}")]
+        [Authorize(Roles = nameof(UserRole.Admin))]
+        public async Task<IActionResult> NumberOfTransactions(int walletId)
+        {
+            try
+            {
+                var number = await _transactionService.GetTotalTransactionsAsync(walletId);
+                return Ok(number);
+            }
+            catch(WalletNotFoundException)
+            {
+                return NotFound("Wallet not found.");
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { message = "Internal server error." });
             }
         }
     }

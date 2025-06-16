@@ -22,7 +22,7 @@ namespace WalletAPI.Interfaces.Services
         Task<IEnumerable<TransactionResponseDto>> GetAllAsync();
 
         // validacao e utilidades
-        Task<FileContentResult> GenerateTransactionReportAsync(int walletId, DateTime? startDate = null, DateTime? endDate = null);
+        Task<byte[]> GenerateTransactionReportAsync(int walletId, DateTime? startDate = null, DateTime? endDate = null);
         Task ValidateFundsAsync(int walletId, decimal amount);
     }
 }
