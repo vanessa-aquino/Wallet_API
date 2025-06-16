@@ -183,6 +183,9 @@ namespace WalletAPI.Controllers
         {
             try
             {
+                if (dto.WalletId <= 0)
+                    throw new ArgumentException("WalletId is required.");
+
                 var accessValidation = await ValidateWalletAccessAsync(dto.WalletId);
                 if (accessValidation != null) return accessValidation;
 
@@ -198,28 +201,31 @@ namespace WalletAPI.Controllers
                 return StatusCode(500, new { message = "Internal server error." });
             }
         }
-        
 
+        [HttpGet("admin/history")]
+        [Authorize(Roles = nameof(UserRole.Admin))]
+        public async Task<ActionResult<IEnumerable<Transaction>>> AdminTransactionHistory([FromQuery] TransactionFilterDto dto)
+        {
+            try
+            {
+                if(dto.WalletId <= 0)
+                {
+                    var allTransactions = await _transactionService.GetAllAsync();
+                    return Ok(allTransactions);
+                }
 
-
-
-        //public async Task<ActionResult<IEnumerable<Transaction>>> GetAllTransactions([FromQuery] TransactionFilterDto filterDto)
-        //{
-        //    try
-        //    {
-
-        //        var transactions = await _transactionService.GetTransactionHistoryAsync(filterDto);
-        //        return Ok(transactions);
-        //    }
-        //    catch (KeyNotFoundException ex)
-        //    {
-        //        return NotFound(ex.Message);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return StatusCode(500, $"Internal server error: {ex.Message}");
-        //    }
-        //}
+                var transactions = await _transactionService.GetTransactionHistoryAsync(dto);
+                return Ok(transactions);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
 
         //[HttpGet("{id}")]
         //public async Task<ActionResult<TransactionDto>> GetTransactionById(int id)

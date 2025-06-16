@@ -125,58 +125,6 @@ namespace WalletAPI.Repositories
 
             return await query.OrderByDescending(t => t.Date).ToListAsync();
         }
-
-        public async Task<PagedResultDto<TransactionDto>> GetPaginationAsync(TransactionQueryParams dto)
-        {
-            if (dto.Page < 1) dto.Page = 1;
-            if (dto.PageSize <= 0) dto.PageSize = 10;
-
-            var query = _context.Transactions
-                .Include(t => t.Wallet)
-                .Where(t => t.WalletId == dto.WalletId)
-                .AsQueryable();
-
-            if (dto.StartDate.HasValue)
-                query = query.Where(t => t.Date >= dto.StartDate.Value);
-
-            if (dto.EndDate.HasValue)
-                query = query.Where(t => t.Date <= dto.EndDate.Value);
-
-            if (dto.Status.HasValue)
-                query = query.Where(t => t.Status == dto.Status.Value);
-
-            if (dto.Type.HasValue)
-                query = query.Where(t => t.TransactionType == dto.Type.Value);
-
-            var totalItems = await query.CountAsync();
-
-            var transactions = await query
-                .OrderByDescending(t => t.Date)
-                .Skip((dto.Page - 1) * dto.PageSize)
-                .Take(dto.PageSize)
-                .ToListAsync();
-
-            var dtoList = transactions.Select(t => new TransactionDto
-            {
-                Id = t.Id,
-                Amount = t.Amount,
-                Date = t.Date,
-                Description = t.Description,
-                Status = t.Status,
-                TransactionType = t.TransactionType,
-                WalletName = $"{t.Wallet.User.FirstName} {t.Wallet.User.LastName}"
-            }).ToList();
-
-            return new PagedResultDto<TransactionDto>
-            {
-                Data = dtoList,
-                TotalItems = totalItems,
-                Page = dto.Page,
-                PageSize = dto.PageSize,
-                TotalPages = (int)Math.Ceiling(totalItems / (double)dto.PageSize)
-            };
-        }
-
         public async Task<IDbContextTransaction> BeginTransactionAsync() => await _context.Database.BeginTransactionAsync();
         public async Task SaveChangesAsync() => await _context.SaveChangesAsync();
 
@@ -189,5 +137,6 @@ namespace WalletAPI.Repositories
                 .FirstOrDefaultAsync(t => t.Id == id)
                 ?? throw new KeyNotFoundException($"Transaction with id {id} not found.");
         }
+
     }
 }

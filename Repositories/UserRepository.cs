@@ -135,8 +135,8 @@ namespace WalletAPI.Repositories
 
             return new PagedResultDto<UserProfileDto>
             {
-                Users = userDto,
-                TotalUsers = totalItems,
+                Items = userDto,
+                TotalItems = totalItems,
                 Page = dto.Page,
                 PageSize = dto.PageSize,
                 TotalPages = (int)Math.Ceiling(totalItems / (double)dto.PageSize)

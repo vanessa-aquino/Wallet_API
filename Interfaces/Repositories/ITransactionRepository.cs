@@ -21,7 +21,6 @@ namespace WalletAPI.Interfaces.Repositories
             TransactionStatus? status = null,
             TransactionType? type = null
         );
-        Task<PagedResultDto<TransactionDto>> GetPaginationAsync(TransactionQueryParams dto);
         Task<IDbContextTransaction> BeginTransactionAsync();
         Task<Transaction> GetByIdWithIncludesAsync(int id);
         Task SaveChangesAsync();

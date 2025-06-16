@@ -19,6 +19,7 @@ namespace WalletAPI.Interfaces.Services
         Task<IEnumerable<TransactionResponseDto>> GetTransactionHistoryAsync(TransactionFilterDto filterDto);
         Task<int> GetTotalTransactionsAsync(int walletId);
         Task<TransactionDto> GetByIdAsync(int id);
+        Task<IEnumerable<TransactionResponseDto>> GetAllAsync();
 
         // validacao e utilidades
         Task<FileContentResult> GenerateTransactionReportAsync(int walletId, DateTime? startDate = null, DateTime? endDate = null);

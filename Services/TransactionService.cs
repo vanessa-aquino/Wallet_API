@@ -350,5 +350,26 @@ namespace WalletAPI.Services
                 throw;
             }
         }
+
+        public async Task<IEnumerable<TransactionResponseDto>> GetAllAsync()
+        {
+            var transaction = await _transactionRepository.GetAllAsync();
+
+            return transaction.Select(t => new TransactionResponseDto
+            {
+                Id = t.Id,
+                Amount = t.Amount,
+                TransactionType = t.TransactionType,
+                Date = t.Date,
+                Status = t.Status,
+                Description = t.Description,
+                WalletId = t.WalletId,
+                User = new SimpleUserDto
+                {
+                    Id = t.User.Id,
+                    FullName = $"{t.User.FirstName} {t.User.LastName}"
+                }
+            });
+        }
     }
 }
